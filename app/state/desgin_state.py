@@ -6,7 +6,7 @@ from app.schema.requirements import RequirementSpec
 
 
 class DesignState(TypedDict):
-    messages: Annotated[list[BaseMessage], add]
+    messages: Annotated[list[BaseMessage], add] | None
     user_query: str
     clarified_requirements: RequirementSpec | None
     user_clarifications: dict | None
