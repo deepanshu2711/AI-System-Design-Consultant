@@ -10,3 +10,4 @@ class DesignState(TypedDict):
     user_query: str
     clarified_requirements: RequirementSpec | None
     user_clarifications: dict | None
+    clarification_rounds: int
