@@ -13,6 +13,9 @@ llm_with_tools = llm.bind_tools([calculator])
 llm_structured = llm.with_structured_output(CapacityPlan)
 
 
+MAX_TOOL_ITERATIONS = 6
+
+
 async def capacity_planner_agent(state: DesignState):
     clarified_requirements = state.get('clarified_requirements')
     traffic_estimates = state.get('traffic_estimates')
@@ -32,7 +35,8 @@ async def capacity_planner_agent(state: DesignState):
     response = await llm_with_tools.ainvoke(messages)
     messages.append(response)
 
-    while response.tool_calls:
+    iterations = 0
+    while response.tool_calls and iterations < MAX_TOOL_ITERATIONS:
         for tool_call in response.tool_calls:
             if tool_call['name'] == "calculator":
                 result = calculator.invoke(tool_call['args'])
@@ -43,6 +47,11 @@ async def capacity_planner_agent(state: DesignState):
 
         response = await llm_with_tools.ainvoke(messages)
         messages.append(response)
+        iterations += 1
+
+    if iterations >= MAX_TOOL_ITERATIONS and response.tool_calls:
+        print(f"[CapacityPlanner] hit max tool iterations ({MAX_TOOL_ITERATIONS}) "
+              f"— forcing final answer without further tool calls")
 
     messages.append(HumanMessage(
         content="Produce the final capacity plan as structured output now. "
