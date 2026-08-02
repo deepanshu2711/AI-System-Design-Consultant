@@ -74,11 +74,11 @@ async def clarifying_questions_agent(state: DesignState):
             )
 
         return Command(
-            goto="requirement_analyzer_agent",
+            goto="supervisor",
             update={"user_clarifications": existing_clarification}
         )
 
     return Command(
-        goto="requirement_analyzer_agent",
+        goto="supervisor",
         update={"user_clarifications": existing_clarification}
     )
