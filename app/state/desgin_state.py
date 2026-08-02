@@ -3,6 +3,7 @@ from operator import add
 from langchain_core.messages import BaseMessage
 
 from app.schema.requirements import RequirementSpec
+from app.schema.traffic import TrafficEstimate
 
 
 class DesignState(TypedDict):
@@ -11,3 +12,4 @@ class DesignState(TypedDict):
     clarified_requirements: RequirementSpec | None
     user_clarifications: dict | None
     clarification_rounds: int
+    traffic_estimates: TrafficEstimate | None

@@ -4,6 +4,7 @@ from langgraph.checkpoint.memory import MemorySaver
 from app.agents.supervisor import supervisor
 from app.agents.clarifying_questions import clarifying_questions_agent
 from app.agents.requirement_analyzer import requirement_analyzer_agent
+from app.agents.traffic_estimator import traffic_estimator_agent
 from app.state.desgin_state import DesignState
 
 
@@ -16,6 +17,8 @@ def build_supervisor_graph():
         "requirement_analyzer_agent", requirement_analyzer_agent)
     supervisor_graph.add_node(
         "clarifying_questions_agent", clarifying_questions_agent)
+    supervisor_graph.add_node(
+        'traffic_estimator_agent', traffic_estimator_agent)
 
     # NOTE: EDGES
     supervisor_graph.add_edge(START, "supervisor")

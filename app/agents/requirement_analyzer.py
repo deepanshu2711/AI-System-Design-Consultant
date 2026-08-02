@@ -31,7 +31,7 @@ async def requirement_analyzer_agent(state: DesignState):
     })
 
     return Command(
-        goto=END,
+        goto="supervisor",
         update={
             "clarified_requirements": result
         }
