@@ -27,4 +27,7 @@ async def supervisor(state: DesignState):
     if not state['capacity_plan']:
         return Command(goto="capacity_planner_agent")
 
+    if not state['database_design']:
+        return Command(goto="database_designer_agent")
+
     return Command(goto=END)
