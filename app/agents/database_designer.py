@@ -62,7 +62,7 @@ async def database_designer_agent(state: DesignState):
     result = await llm_with_structure.ainvoke(messages)
 
     return Command(
-        goto=END,
+        goto="supervisor",
         update={
             "database_design": result
         }

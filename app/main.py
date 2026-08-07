@@ -28,7 +28,9 @@ async def start_design(req: StartDesignRequest):
         "clarification_rounds": 0,
         "traffic_estimates": None,
         "capacity_plan": None,
-        "database_design": None
+        "database_design": None,
+        "cache_design": None,
+        "queue_expert": None
     }, config={
         "configurable": {"thread_id": thread_id}
     })

@@ -2,8 +2,10 @@ from typing import Annotated, TypedDict
 from operator import add
 from langchain_core.messages import BaseMessage
 
+from app.schema.cache import CacheDesign
 from app.schema.capacity import CapacityPlan
 from app.schema.database import DatabaseDesign
+from app.schema.queue import QueueDesign
 from app.schema.requirements import RequirementSpec
 from app.schema.traffic import TrafficEstimate
 
@@ -18,3 +20,5 @@ class DesignState(TypedDict):
     traffic_estimates: TrafficEstimate | None
     capacity_plan: CapacityPlan | None
     database_design: DatabaseDesign | None
+    cache_design: CacheDesign | None
+    queue_expert: QueueDesign | None
