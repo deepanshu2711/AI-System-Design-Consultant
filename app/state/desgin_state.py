@@ -2,6 +2,7 @@ from typing import Annotated, TypedDict
 from operator import add
 from langchain_core.messages import BaseMessage
 
+from app.schema.api import ApiDesign
 from app.schema.cache import CacheDesign
 from app.schema.capacity import CapacityPlan
 from app.schema.database import DatabaseDesign
@@ -22,3 +23,4 @@ class DesignState(TypedDict):
     database_design: DatabaseDesign | None
     cache_design: CacheDesign | None
     queue_expert: QueueDesign | None
+    api_design: ApiDesign | None

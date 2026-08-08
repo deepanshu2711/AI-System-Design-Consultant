@@ -58,8 +58,6 @@ async def queue_expert_agent(state: DesignState):
 
     result = await llm_structured.ainvoke(messages)
 
-    print('result from queue expert', result)
-
     return Command(
         goto="supervisor",
         update={"queue_expert": result}

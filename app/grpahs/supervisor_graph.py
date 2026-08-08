@@ -1,6 +1,7 @@
 from langgraph.graph import START, StateGraph
 from langgraph.checkpoint.memory import MemorySaver
 
+from app.agents.api_designer import api_designer_agent
 from app.agents.cache_expert import cache_expert_agent
 from app.agents.capacity_planner import capacity_planner_agent
 from app.agents.database_designer import database_designer_agent
@@ -28,6 +29,7 @@ def build_supervisor_graph():
         'database_designer_agent', database_designer_agent)
     supervisor_graph.add_node('cache_expert_agent', cache_expert_agent)
     supervisor_graph.add_node('queue_expert_agent', queue_expert_agent)
+    supervisor_graph.add_node('api_designer_agent', api_designer_agent)
 
     # NOTE: EDGES
     supervisor_graph.add_edge(START, "supervisor")

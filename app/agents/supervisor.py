@@ -49,4 +49,7 @@ async def supervisor(state: DesignState):
     if not state['queue_expert']:
         return Command(goto="queue_expert_agent")
 
+    if not state['api_design']:
+        return Command(goto='api_designer_agent')
+
     return Command(goto=END)
