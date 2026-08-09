@@ -35,15 +35,23 @@ Rules you must follow:
 6. Do not invent features that have no reasonable connection to the product 
    described. Stay grounded in what the prompt and clarifications actually imply.
 
-7. Respond ONLY with a valid JSON object matching the schema below. No 
+7. Set involves_media_content to true if the system stores, uploads, or serves 
+   images, video, audio, or other large binary files as a core part of its 
+   functionality (e.g. photo sharing, video streaming, file storage). Set it to 
+   false for purely text/data-driven systems (e.g. URL shorteners, todo apps, 
+   messaging without media attachments).
+
+8. Respond ONLY with a valid JSON object matching the schema below. No 
    preamble, no markdown fences, no explanation outside the JSON.
+
 
 Output schema:
 {{
   "functional_requirements": ["string", ...],
   "non_functional_requirements": ["string", ...],
   "assumed_scale": "string",
-  "explicit_assumptions": ["string", ...]
+  "explicit_assumptions": ["string", ...],
+  "involves_media_content": boolean
 }}
 """
 
@@ -72,7 +80,8 @@ Output:
     "Assuming links do not expire by default unless explicitly set",
     "Assuming single-region deployment is acceptable for v1",
     "Assuming no custom domain support in this version"
-  ]
+  ],
+  "involves_media_content": false
 }}
 
 Example 2:
@@ -100,6 +109,7 @@ Output:
     "Assuming payments are handled via a third-party processor, not built in-house",
     "Assuming driver background checks/onboarding are out of scope",
     "Assuming service operates in multiple cities but not multiple countries initially"
-  ]
+  ],
+  "involves_media_content": true
 }}
 """

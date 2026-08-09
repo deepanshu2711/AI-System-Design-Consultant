@@ -6,13 +6,15 @@ from app.schema.api import ApiDesign
 from app.state.desgin_state import DesignState
 from app.tools.json_formatter import json_formatter
 from app.utils.llm_factory import llm
+from app.utils.timing import timed_node
 
 llm_with_tools = llm.bind_tools([json_formatter])
 llm_structured = llm.with_structured_output(ApiDesign)
 
-MAX_TOOL_ITERATIONS = 10  # API design may need more calls — one per example payload
+MAX_TOOL_ITERATIONS = 50  # API design may need more calls — one per example payload
 
 
+@timed_node("api_designer_agent")
 async def api_designer_agent(state: DesignState):
     clarified_requirements = state.get('clarified_requirements')
     database_design = state.get('database_design')

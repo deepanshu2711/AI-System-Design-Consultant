@@ -1,11 +1,10 @@
 import asyncio
 
 from langchain_core.messages import HumanMessage, SystemMessage, ToolMessage
-from langgraph.graph import END
 from langgraph.types import Command
 
-from app.prompts.database_designer.v1 import DATABASE_DESIGNER_SYSTEM_PROMPT
-from app.schema.database import DatabaseDesign
+from app.prompts.storage_expert.v1 import STORAGE_EXPERT_SYSTEM_PROMPT
+from app.schema.storage import StorageDesign
 from app.state.desgin_state import DesignState
 
 from app.tools.calculator import calculator
@@ -13,27 +12,25 @@ from app.utils.llm_factory import llm
 from app.utils.timing import timed_node
 
 llm_with_tool = llm.bind_tools([calculator])
-llm_with_structure = llm.with_structured_output(DatabaseDesign)
+llm_with_structure = llm.with_structured_output(StorageDesign)
 
 
 MAX_TOOL_ITERATIONS = 6
 
 
-@timed_node("database_designer_agent")
-async def database_designer_agent(state: DesignState):
+@timed_node("storage_expert_agent")
+async def storage_expert_agent(state: DesignState):
     clarified_requirements = state.get('clarified_requirements')
     traffic_estimates = state.get('traffic_estimates')
 
     human_prompt = (
         f"Clarified requirements:\n{clarified_requirements}\n\n"
         f"Traffic estimates:\n{
-            traffic_estimates or 'Not available — estimate row growth conservatively from requirements alone.'}\n\n"
-        "Design the database schema, using the calculator tool to estimate row "
-        "counts per table where relevant."
+            traffic_estimates or 'Not available — estimate row growth conservatively from requirements alone.'}"
     )
 
     messages = [
-        SystemMessage(content=DATABASE_DESIGNER_SYSTEM_PROMPT),
+        SystemMessage(content=STORAGE_EXPERT_SYSTEM_PROMPT),
         HumanMessage(content=human_prompt)
     ]
 
@@ -55,17 +52,16 @@ async def database_designer_agent(state: DesignState):
         iterations += 1
 
     if iterations >= MAX_TOOL_ITERATIONS and response.tool_calls:
-        print(f"[DatabaseDesigner] hit max tool iterations — forcing final answer")
+        print(f"[StorageDesigner] hit max tool iterations — forcing final answer")
 
     messages.append(HumanMessage(
-        content="Produce the final database design as structured output now, "
-                "including all tables, relationships, and sample queries."
+        content="Produce the final Storage design as structured output now, "
     ))
     result = await llm_with_structure.ainvoke(messages)
 
     return Command(
         goto="supervisor",
         update={
-            "database_design": result
+            "storage_design": result
         }
     )

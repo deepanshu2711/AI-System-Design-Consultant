@@ -8,6 +8,7 @@ from app.prompts.clarifying_questions.v1 import CLARIFYING_QUESTIONS_SYSTEM_PROM
 from app.schema.clarification import ClarificationAssessment, ClarifyingQuestions
 from app.state.desgin_state import DesignState
 from app.utils.llm_factory import llm
+from app.utils.timing import timed_node
 
 questions_parser = PydanticOutputParser(pydantic_object=ClarifyingQuestions)
 assessment_parser = PydanticOutputParser(
@@ -27,9 +28,10 @@ assessment_prompt = ChatPromptTemplate.from_messages([
 ])
 assessment_chain = assessment_prompt | llm | assessment_parser
 
-MAX_CLARIFICATION_ROUNDS = 2
+MAX_CLARIFICATION_ROUNDS = 6
 
 
+@timed_node("clarifying_questions_agent")
 async def clarifying_questions_agent(state: DesignState):
     rounds = state['clarification_rounds']
     existing_clarification = state["user_clarifications"] or {}

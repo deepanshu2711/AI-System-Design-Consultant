@@ -6,6 +6,7 @@ from app.schema.queue import QueueDesign
 from app.state.desgin_state import DesignState
 from app.tools.calculator import calculator
 from app.utils.llm_factory import llm
+from app.utils.timing import timed_node
 
 llm_with_tools = llm.bind_tools([calculator])
 llm_structured = llm.with_structured_output(QueueDesign)
@@ -13,6 +14,7 @@ llm_structured = llm.with_structured_output(QueueDesign)
 MAX_TOOL_ITERATIONS = 6
 
 
+@timed_node("queue_expert_agent")
 async def queue_expert_agent(state: DesignState):
     clarified_requirements = state.get('clarified_requirements')
     traffic_estimates = state.get('traffic_estimates')

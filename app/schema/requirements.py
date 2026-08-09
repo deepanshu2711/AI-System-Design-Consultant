@@ -6,3 +6,4 @@ class RequirementSpec(BaseModel):
     non_functional_requirements: list[str]
     assumed_scale: str
     explicit_assumptions: list[str]
+    involves_media_content: bool

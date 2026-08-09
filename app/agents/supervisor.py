@@ -4,11 +4,13 @@ from langgraph.graph import END
 
 from app.state.desgin_state import DesignState
 from langgraph.types import Command, Send
+from app.utils.timing import timed_node
 
 
+@timed_node("supervisor")
 async def supervisor(state: DesignState):
-    # if not state['user_clarifications']:
-    #     return Command(goto="clarifying_questions_agent")
+    if not state['user_clarifications']:
+        return Command(goto="clarifying_questions_agent")
     if not state['clarified_requirements']:
         return Command(goto="requirement_analyzer_agent")
 
@@ -51,5 +53,23 @@ async def supervisor(state: DesignState):
 
     if not state['api_design']:
         return Command(goto='api_designer_agent')
+
+    requirements = state.get('clarified_requirements')
+    needs_media = getattr(requirements, 'involves_media_content', False)
+
+    cdn_ready = bool(state['cdn_design'])
+    storage_ready = bool(state['storage_design'])
+
+    if needs_media and not cdn_ready and not storage_ready:
+        return Command(goto=[
+            Send("cdn_expert_agent", state),
+            Send("storage_expert_agent", state),
+        ])
+
+    if needs_media and not cdn_ready:
+        return Command(goto="cdn_expert_agent")
+
+    if needs_media and not storage_ready:
+        return Command(goto="storage_expert_agent")
 
     return Command(goto=END)

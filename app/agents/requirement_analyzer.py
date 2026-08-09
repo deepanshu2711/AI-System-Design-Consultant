@@ -8,11 +8,13 @@ from app.schema.requirements import RequirementSpec
 from app.state.desgin_state import DesignState
 from app.prompts.requirement_analyzer.v1 import FEW_SHOT_EXAMPLES, REQUIREMENT_ANALYZER_SYSTEM_PROMPT
 from app.utils.llm_factory import llm
+from app.utils.timing import timed_node
 
 
 parser = PydanticOutputParser(pydantic_object=RequirementSpec)
 
 
+@timed_node("requirement_analyzer_agent")
 async def requirement_analyzer_agent(state: DesignState):
     requirement_analyzer_prompt = ChatPromptTemplate.from_messages([
         ("system", REQUIREMENT_ANALYZER_SYSTEM_PROMPT + FEW_SHOT_EXAMPLES),

@@ -8,6 +8,7 @@ from app.schema.capacity import CapacityPlan
 from app.state.desgin_state import DesignState
 from app.tools.calculator import calculator
 from app.utils.llm_factory import llm
+from app.utils.timing import timed_node
 
 llm_with_tools = llm.bind_tools([calculator])
 llm_structured = llm.with_structured_output(CapacityPlan)
@@ -16,6 +17,7 @@ llm_structured = llm.with_structured_output(CapacityPlan)
 MAX_TOOL_ITERATIONS = 6
 
 
+@timed_node("capacity_planner_agent")
 async def capacity_planner_agent(state: DesignState):
     clarified_requirements = state.get('clarified_requirements')
     traffic_estimates = state.get('traffic_estimates')

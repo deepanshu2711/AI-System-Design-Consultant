@@ -10,6 +10,7 @@ from app.schema.traffic import TrafficEstimate
 from app.state.desgin_state import DesignState
 from app.tools.calculator import calculator
 from app.utils.llm_factory import llm
+from app.utils.timing import timed_node
 
 parser = PydanticOutputParser(pydantic_object=TrafficEstimate)
 llm_with_tools = llm.bind_tools([calculator])
@@ -19,6 +20,7 @@ llm_structured = llm.with_structured_output(TrafficEstimate)
 MAX_TOOL_ITERATIONS = 6
 
 
+@timed_node("traffic_estimator_agent")
 async def traffic_estimator_agent(state: DesignState):
     clarified_requirements = state['clarified_requirements']
 

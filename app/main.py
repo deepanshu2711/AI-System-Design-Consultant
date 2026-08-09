@@ -30,7 +30,10 @@ async def start_design(req: StartDesignRequest):
         "capacity_plan": None,
         "database_design": None,
         "cache_design": None,
-        "queue_expert": None
+        "queue_expert": None,
+        "cdn_design": None,
+        "storage_design": None,
+        "api_design": None
     }, config={
         "configurable": {"thread_id": thread_id}
     })

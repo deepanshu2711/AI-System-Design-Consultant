@@ -1,0 +1,20 @@
+import time
+from functools import wraps
+
+
+def timed_node(name: str):
+    def decorator(func):
+        @wraps(func)
+        async def wrapper(*args, **kwargs):
+            start = time.perf_counter()
+
+            try:
+                result = await func(*args, **kwargs)
+                return result
+            finally:
+                elapsed = time.perf_counter() - start
+                print(f"⏱️ {name}: {elapsed:.2f}s")
+
+        return wrapper
+
+    return decorator
