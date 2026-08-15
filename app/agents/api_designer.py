@@ -11,7 +11,7 @@ from app.utils.timing import timed_node
 llm_with_tools = llm.bind_tools([json_formatter])
 llm_structured = llm.with_structured_output(ApiDesign)
 
-MAX_TOOL_ITERATIONS = 50  # API design may need more calls — one per example payload
+MAX_TOOL_ITERATIONS = 6  # one per example payload; endpoints are capped at 6
 
 
 @timed_node("api_designer_agent")

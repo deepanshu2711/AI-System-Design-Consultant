@@ -9,8 +9,8 @@ from app.utils.timing import timed_node
 
 @timed_node("supervisor")
 async def supervisor(state: DesignState):
-    if not state['user_clarifications']:
-        return Command(goto="clarifying_questions_agent")
+    # if not state['user_clarifications']:
+    #     return Command(goto="clarifying_questions_agent")
     if not state['clarified_requirements']:
         return Command(goto="requirement_analyzer_agent")
 

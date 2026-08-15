@@ -14,7 +14,7 @@ llm_with_tools = llm.bind_tools([calculator])
 llm_structured = llm.with_structured_output(CapacityPlan)
 
 
-MAX_TOOL_ITERATIONS = 6
+MAX_TOOL_ITERATIONS = 3
 
 
 @timed_node("capacity_planner_agent")

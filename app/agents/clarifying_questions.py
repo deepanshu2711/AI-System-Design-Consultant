@@ -28,7 +28,7 @@ assessment_prompt = ChatPromptTemplate.from_messages([
 ])
 assessment_chain = assessment_prompt | llm | assessment_parser
 
-MAX_CLARIFICATION_ROUNDS = 6
+MAX_CLARIFICATION_ROUNDS = 3
 
 
 @timed_node("clarifying_questions_agent")

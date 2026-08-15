@@ -11,7 +11,7 @@ from app.utils.timing import timed_node
 llm_with_tools = llm.bind_tools([calculator])
 llm_structured = llm.with_structured_output(CacheDesign)
 
-MAX_TOOL_ITERATIONS = 6
+MAX_TOOL_ITERATIONS = 3
 
 
 @timed_node("cache_expert_agent")

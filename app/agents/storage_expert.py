@@ -15,7 +15,7 @@ llm_with_tool = llm.bind_tools([calculator])
 llm_with_structure = llm.with_structured_output(StorageDesign)
 
 
-MAX_TOOL_ITERATIONS = 6
+MAX_TOOL_ITERATIONS = 3
 
 
 @timed_node("storage_expert_agent")
