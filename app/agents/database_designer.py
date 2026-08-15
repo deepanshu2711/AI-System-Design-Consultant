@@ -50,9 +50,9 @@ async def database_designer_agent(state: DesignState):
             messages.append(ToolMessage(
                 content=result, tool_call_id=tool_call['id']))
 
+        iterations += 1
         response = await llm_with_tool.ainvoke(messages)
         messages.append(response)
-        iterations += 1
 
     if iterations >= MAX_TOOL_ITERATIONS and response.tool_calls:
         print(f"[DatabaseDesigner] hit max tool iterations — forcing final answer")
@@ -61,7 +61,10 @@ async def database_designer_agent(state: DesignState):
         content="Produce the final database design as structured output now, "
                 "including all tables, relationships, and sample queries."
     ))
+
+    print("🏁 Starting structured output")
     result = await llm_with_structure.ainvoke(messages)
+    print("✅ Structured output completed")
 
     return Command(
         goto="supervisor",

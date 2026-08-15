@@ -20,13 +20,17 @@ DECISION RULES:
      the data model itself fits NoSQL — this is a common but lazy justification.
 
 2. Schema design:
+   - Design at most 6-8 core tables — the ones that directly serve the system's
+     functional requirements. Do not add supporting/lookup tables beyond that unless
+     a requirement explicitly demands one.
    - Every table must have an explicit primary key.
-   - Add foreign keys wherever a real relationship exists between tables — do not 
+   - Add foreign keys wherever a real relationship exists between tables — do not
      leave relationships implicit.
-   - Add indexes for any column you expect to be used in a WHERE clause, JOIN, or 
-     sort operation based on the system's core functional requirements. Justify 
-     each index with a one-line reasoning tied to a specific query pattern.
+   - Add at most 2-4 indexes per table — pick the ones that matter most for the
+     system's core query patterns. Justify each index with a one-line reasoning
+     tied to a specific query pattern.
    - Use appropriate data types — do not default everything to string/text.
+   - Keep column and index `description`/`reasoning` fields to one concise sentence.
 
 3. Scale-awareness:
    - Use the calculator tool to estimate row counts per table per year, using DAU/
