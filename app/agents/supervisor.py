@@ -72,4 +72,7 @@ async def supervisor(state: DesignState):
     if needs_media and not storage_ready:
         return Command(goto="storage_expert_agent")
 
+    if not state['microservice_design']:
+        return Command(goto="microservice_expert_agent")
+
     return Command(goto=END)

@@ -6,6 +6,7 @@ from app.agents.cache_expert import cache_expert_agent
 from app.agents.capacity_planner import capacity_planner_agent
 from app.agents.cdn_expert import cdn_expert_agent
 from app.agents.database_designer import database_designer_agent
+from app.agents.microservice_expert import microservice_expert_agent
 from app.agents.queue_expert import queue_expert_agent
 from app.agents.storage_expert import storage_expert_agent
 from app.agents.supervisor import supervisor
@@ -41,6 +42,8 @@ def build_supervisor_graph():
         'cdn_expert_agent', cdn_expert_agent, retry_policy=default_retry_policy())
     supervisor_graph.add_node(
         'storage_expert_agent', storage_expert_agent, retry_policy=default_retry_policy())
+    supervisor_graph.add_node(
+        'microservice_expert_agent', microservice_expert_agent, retry_policy=default_retry_policy())
 
     # NOTE: EDGES
     supervisor_graph.add_edge(START, "supervisor")

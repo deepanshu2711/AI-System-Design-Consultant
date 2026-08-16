@@ -36,6 +36,7 @@ async def start_design(req: StartDesignRequest):
             "cdn_design": None,
             "storage_design": None,
             "api_design": None,
+            "microservice_design": None,
             "errors": None
         }, config={
             "configurable": {"thread_id": thread_id}
