@@ -13,6 +13,7 @@ from app.agents.clarifying_questions import clarifying_questions_agent
 from app.agents.requirement_analyzer import requirement_analyzer_agent
 from app.agents.traffic_estimator import traffic_estimator_agent
 from app.state.desgin_state import DesignState
+from app.utils.retry import default_retry_policy
 
 
 def build_supervisor_graph():
@@ -21,19 +22,25 @@ def build_supervisor_graph():
     # NOTE: NODES
     supervisor_graph.add_node("supervisor", supervisor)
     supervisor_graph.add_node(
-        "requirement_analyzer_agent", requirement_analyzer_agent)
+        "requirement_analyzer_agent", requirement_analyzer_agent, retry_policy=default_retry_policy())
     supervisor_graph.add_node(
-        "clarifying_questions_agent", clarifying_questions_agent)
+        "clarifying_questions_agent", clarifying_questions_agent, retry_policy=default_retry_policy())
     supervisor_graph.add_node(
-        'traffic_estimator_agent', traffic_estimator_agent)
-    supervisor_graph.add_node('capacity_planner_agent', capacity_planner_agent)
+        'traffic_estimator_agent', traffic_estimator_agent, retry_policy=default_retry_policy())
     supervisor_graph.add_node(
-        'database_designer_agent', database_designer_agent)
-    supervisor_graph.add_node('cache_expert_agent', cache_expert_agent)
-    supervisor_graph.add_node('queue_expert_agent', queue_expert_agent)
-    supervisor_graph.add_node('api_designer_agent', api_designer_agent)
-    supervisor_graph.add_node('cdn_expert_agent', cdn_expert_agent)
-    supervisor_graph.add_node('storage_expert_agent', storage_expert_agent)
+        'capacity_planner_agent', capacity_planner_agent, retry_policy=default_retry_policy())
+    supervisor_graph.add_node(
+        'database_designer_agent', database_designer_agent, retry_policy=default_retry_policy())
+    supervisor_graph.add_node(
+        'cache_expert_agent', cache_expert_agent, retry_policy=default_retry_policy())
+    supervisor_graph.add_node(
+        'queue_expert_agent', queue_expert_agent, retry_policy=default_retry_policy())
+    supervisor_graph.add_node(
+        'api_designer_agent', api_designer_agent, retry_policy=default_retry_policy())
+    supervisor_graph.add_node(
+        'cdn_expert_agent', cdn_expert_agent, retry_policy=default_retry_policy())
+    supervisor_graph.add_node(
+        'storage_expert_agent', storage_expert_agent, retry_policy=default_retry_policy())
 
     # NOTE: EDGES
     supervisor_graph.add_edge(START, "supervisor")

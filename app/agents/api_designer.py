@@ -56,6 +56,7 @@ async def api_designer_agent(state: DesignState):
                 "including all endpoints with validated JSON examples."
     ))
 
+    print("🏁 SAPI Designer tarting structured output")
     result = await llm_structured.ainvoke(messages)
 
     return Command(
