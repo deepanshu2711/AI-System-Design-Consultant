@@ -7,6 +7,7 @@ from app.prompts.capacity_planner.v1 import CAPACITY_PLANNER_SYSTEM_PROMPT
 from app.schema.capacity import CapacityPlan
 from app.state.desgin_state import DesignState
 from app.tools.calculator import calculator
+from app.utils.error_handling import catch_agent_errors
 from app.utils.llm_factory import llm
 from app.utils.timing import timed_node
 
@@ -18,6 +19,7 @@ MAX_TOOL_ITERATIONS = 3
 
 
 @timed_node("capacity_planner_agent")
+@catch_agent_errors("capacity_planner_agent")
 async def capacity_planner_agent(state: DesignState):
     clarified_requirements = state.get('clarified_requirements')
     traffic_estimates = state.get('traffic_estimates')

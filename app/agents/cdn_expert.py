@@ -4,6 +4,7 @@ from langgraph.types import Command
 from app.prompts.cdn_expert.v1 import CDN_EXPERT_SYSTEM_PROMPT
 from app.schema.cdn import CdnDesign
 from app.state.desgin_state import DesignState
+from app.utils.error_handling import catch_agent_errors
 from app.utils.llm_factory import llm
 from app.utils.timing import timed_node
 
@@ -11,6 +12,7 @@ llm_structured = llm.with_structured_output(CdnDesign)
 
 
 @timed_node("cdn_expert_agent")
+@catch_agent_errors("cdn_expert_agent")
 async def cdn_expert_agent(state: DesignState):
     clarified_requirements = state.get('clarified_requirements')
     database_design = state.get('database_design')

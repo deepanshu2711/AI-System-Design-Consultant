@@ -9,6 +9,7 @@ from app.schema.database import DatabaseDesign
 from app.state.desgin_state import DesignState
 
 from app.tools.calculator import calculator
+from app.utils.error_handling import catch_agent_errors
 from app.utils.llm_factory import llm
 from app.utils.timing import timed_node
 
@@ -20,6 +21,7 @@ MAX_TOOL_ITERATIONS = 3
 
 
 @timed_node("database_designer_agent")
+@catch_agent_errors("database_designer_agent")
 async def database_designer_agent(state: DesignState):
     clarified_requirements = state.get('clarified_requirements')
     traffic_estimates = state.get('traffic_estimates')

@@ -1,5 +1,6 @@
 from functools import wraps
 
+from langgraph.errors import GraphBubbleUp
 from langgraph.types import Command
 
 from app.schema.error import make_agent_error
@@ -16,6 +17,10 @@ def catch_agent_errors(node_name: str):
                 # Let LangGraph's RetryPolicy retry these; only record an
                 # AgentError once retries are exhausted and this propagates
                 # past the graph invocation (see app/main.py).
+                raise
+            except GraphBubbleUp:
+                # LangGraph's own control flow (interrupt(), etc.) - must
+                # propagate untouched, not be recorded as an agent error.
                 raise
             except Exception as exc:
                 prior_attempts = sum(

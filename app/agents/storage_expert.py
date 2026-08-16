@@ -8,6 +8,7 @@ from app.schema.storage import StorageDesign
 from app.state.desgin_state import DesignState
 
 from app.tools.calculator import calculator
+from app.utils.error_handling import catch_agent_errors
 from app.utils.llm_factory import llm
 from app.utils.timing import timed_node
 
@@ -19,6 +20,7 @@ MAX_TOOL_ITERATIONS = 3
 
 
 @timed_node("storage_expert_agent")
+@catch_agent_errors("storage_expert_agent")
 async def storage_expert_agent(state: DesignState):
     clarified_requirements = state.get('clarified_requirements')
     traffic_estimates = state.get('traffic_estimates')

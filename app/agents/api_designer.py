@@ -5,6 +5,7 @@ from app.prompts.api_designer.v1 import API_DESIGNER_SYSTEM_PROMPT
 from app.schema.api import ApiDesign
 from app.state.desgin_state import DesignState
 from app.tools.json_formatter import json_formatter
+from app.utils.error_handling import catch_agent_errors
 from app.utils.llm_factory import llm
 from app.utils.timing import timed_node
 
@@ -15,6 +16,7 @@ MAX_TOOL_ITERATIONS = 6  # one per example payload; endpoints are capped at 6
 
 
 @timed_node("api_designer_agent")
+@catch_agent_errors("api_designer_agent")
 async def api_designer_agent(state: DesignState):
     clarified_requirements = state.get('clarified_requirements')
     database_design = state.get('database_design')

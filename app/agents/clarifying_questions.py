@@ -7,6 +7,7 @@ from langgraph.types import Command, interrupt
 from app.prompts.clarifying_questions.v1 import CLARIFYING_QUESTIONS_SYSTEM_PROMPT, FOLLOWUP_ASSESSMENT_SYSTEM_PROMPT
 from app.schema.clarification import ClarificationAssessment, ClarifyingQuestions
 from app.state.desgin_state import DesignState
+from app.utils.error_handling import catch_agent_errors
 from app.utils.llm_factory import llm
 from app.utils.timing import timed_node
 
@@ -32,6 +33,7 @@ MAX_CLARIFICATION_ROUNDS = 3
 
 
 @timed_node("clarifying_questions_agent")
+@catch_agent_errors("clarifying_questions_agent")
 async def clarifying_questions_agent(state: DesignState):
     rounds = state['clarification_rounds']
     existing_clarification = state["user_clarifications"] or {}

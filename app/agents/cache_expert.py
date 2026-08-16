@@ -5,6 +5,7 @@ from app.prompts.cache_expert.v1 import CACHE_EXPERT_SYSTEM_PROMPT
 from app.schema.cache import CacheDesign
 from app.state.desgin_state import DesignState
 from app.tools.calculator import calculator
+from app.utils.error_handling import catch_agent_errors
 from app.utils.llm_factory import llm
 from app.utils.timing import timed_node
 
@@ -15,6 +16,7 @@ MAX_TOOL_ITERATIONS = 3
 
 
 @timed_node("cache_expert_agent")
+@catch_agent_errors("cache_expert_agent")
 async def cache_expert_agent(state: DesignState):
     clarified_requirements = state.get('clarified_requirements')
     traffic_estimates = state.get('traffic_estimates')
