@@ -7,6 +7,7 @@ from app.schema.cache import CacheDesign
 from app.schema.capacity import CapacityPlan
 from app.schema.cdn import CdnDesign
 from app.schema.database import DatabaseDesign
+from app.schema.error import AgentError
 from app.schema.queue import QueueDesign
 from app.schema.requirements import RequirementSpec
 from app.schema.storage import StorageDesign
@@ -29,3 +30,5 @@ class DesignState(TypedDict):
 
     cdn_design:  CdnDesign | None
     storage_design:  StorageDesign | None
+
+    errors: Annotated[list[AgentError], add] | None
