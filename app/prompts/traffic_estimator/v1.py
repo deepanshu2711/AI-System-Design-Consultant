@@ -18,16 +18,5 @@ Rules:
    calculation, respond with ONLY a JSON object matching this exact schema, with no 
    extra text, no markdown fences:
 
-{{
-  "dau": int,
-  "mau": int,
-  "peak_rps": float,
-  "avg_rps": float,
-  "read_write_ratio": "string, e.g. '100:1'",
-  "avg_request_size_kb": float,
-  "avg_response_size_kb": float,
-  "reasoning": "string summarizing your assumptions and calculations"
-}}
-
 Do not respond with this JSON until you have finished all calculator calls you need.
 """
