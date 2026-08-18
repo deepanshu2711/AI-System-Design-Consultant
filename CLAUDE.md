@@ -29,7 +29,9 @@ Every file in `app/agents/` follows the same shape: build messages → bind tool
 
 ## Current WIP state
 
-The supervisor's parallel `Send()` fan-out (dispatching multiple agents concurrently, e.g. traffic_estimator + capacity_planner) is being reworked and is currently commented out in favor of sequential routing — several agent branches (capacity_planner, api_designer, cdn_expert, storage_expert) are temporarily unreachable from the supervisor even though their node functions exist. This is active in-progress work, not dead code — don't remove the commented-out branches without checking in first.
+The supervisor (`app/agents/supervisor.py`) now routes sequentially through the full chain: clarifying_questions → requirement_analyzer → traffic_estimator → capacity_planner → database_designer → cache_expert → queue_expert → api_designer → (cdn_expert + storage_expert, only when `clarified_requirements.involves_media_content`) → microservice_expert → END. Every agent node is reachable.
+
+A parallel `Send()`-based fan-out (dispatching multiple agents concurrently, e.g. traffic_estimator + capacity_planner, or db/cache/queue together) was sketched in earlier comments but has been dropped in favor of the sequential routing above — if that rework resumes, start from git history rather than reintroducing commented-out branches.
 
 ## No test/lint tooling yet
 
