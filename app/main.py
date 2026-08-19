@@ -1,18 +1,16 @@
+from app.utils.retry import RETRYABLE_ERRORS
+from app.utils.helpers import format_response
+from app.schema.design import ResumeDesignRequest, StartDesignRequest
+from app.grpahs.supervisor_graph import supervisor_graph
+from langgraph.types import Command
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi import FastAPI, HTTPException
+import uuid
+import asyncio
 from dotenv import load_dotenv
 
 load_dotenv()
 
-import asyncio
-import uuid
-
-from fastapi import FastAPI, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
-from langgraph.types import Command
-
-from app.grpahs.supervisor_graph import supervisor_graph
-from app.schema.design import ResumeDesignRequest, StartDesignRequest
-from app.utils.helpers import format_response
-from app.utils.retry import RETRYABLE_ERRORS
 
 app = FastAPI()
 
