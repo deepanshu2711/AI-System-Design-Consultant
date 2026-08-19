@@ -126,6 +126,21 @@
   gap: 6px;
 }
 
+.error-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: var(--danger-soft);
+  color: var(--danger);
+  border: 1px solid var(--danger);
+  border-radius: var(--radius-md);
+  padding: 12px 16px;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  margin-bottom: 16px;
+  text-align: left;
+}
+
 /* ---------- query screen ---------- */
 
 .query-screen {
@@ -504,6 +519,19 @@
   background: var(--primary-soft);
   color: var(--primary);
   font-weight: 600;
+}
+
+.sidebar__errors {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--warning);
+  background: var(--warning-soft);
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 9px 10px;
+  border-radius: var(--radius-sm);
+  margin-top: 12px;
 }
 
 .sidebar__reset {

@@ -8,8 +8,8 @@ const EXAMPLES = [
   "Design a real-time chat application",
 ]
 
-export default function QueryScreen({ onSubmit }) {
-  const [value, setValue] = useState("")
+export default function QueryScreen({ onSubmit, initialValue = "", error }) {
+  const [value, setValue] = useState(initialValue)
 
   function handleSubmit(e) {
     e.preventDefault()
@@ -30,6 +30,13 @@ export default function QueryScreen({ onSubmit }) {
         Describe a system in a sentence. The consultant will ask clarifying questions,
         then produce a full architecture — requirements, traffic, capacity, data, and API design.
       </p>
+
+      {error && (
+        <div className="error-banner">
+          <Icon name="gauge" size={15} />
+          {error}
+        </div>
+      )}
 
       <form className="query-form" onSubmit={handleSubmit}>
         <textarea

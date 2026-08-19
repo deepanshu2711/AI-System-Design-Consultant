@@ -1,8 +1,7 @@
 import { useState } from "react"
 import Icon from "./Icon.jsx"
-import { dummyClarifyingQuestions } from "../data/dummyData.js"
 
-export default function ClarifyingScreen({ query, onSubmit }) {
+export default function ClarifyingScreen({ query, message, questions, onSubmit, error }) {
   const [answers, setAnswers] = useState({})
 
   function setAnswer(q, val) {
@@ -21,8 +20,15 @@ export default function ClarifyingScreen({ query, onSubmit }) {
           <Icon name="message-circle" size={14} />
           Clarifying questions
         </span>
-        <p>{dummyClarifyingQuestions.reasoning}</p>
+        <p>{message}</p>
       </div>
+
+      {error && (
+        <div className="error-banner">
+          <Icon name="gauge" size={15} />
+          {error}
+        </div>
+      )}
 
       <form
         className="clarify-form"
@@ -31,7 +37,7 @@ export default function ClarifyingScreen({ query, onSubmit }) {
           onSubmit(answers)
         }}
       >
-        {dummyClarifyingQuestions.questions.map((q, i) => (
+        {questions.map((q, i) => (
           <div className="clarify-form__item" key={q}>
             <label className="clarify-form__question">
               <span className="clarify-form__number">{i + 1}</span>
@@ -48,7 +54,7 @@ export default function ClarifyingScreen({ query, onSubmit }) {
         ))}
 
         <button className="btn btn--primary clarify-form__submit" type="submit">
-          Generate design
+          Continue
           <Icon name="arrow-right" size={16} />
         </button>
       </form>

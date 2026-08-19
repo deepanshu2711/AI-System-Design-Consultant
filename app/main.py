@@ -6,6 +6,7 @@ import asyncio
 import uuid
 
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from langgraph.types import Command
 
 from app.grpahs.supervisor_graph import supervisor_graph
@@ -14,6 +15,13 @@ from app.utils.helpers import format_response
 from app.utils.retry import RETRYABLE_ERRORS
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 @app.get("/")
@@ -26,7 +34,7 @@ async def start_design(req: StartDesignRequest):
     thread_id = str(uuid.uuid4())
     print('start design thread id', thread_id)
     try:
-        return await supervisor_graph.ainvoke({
+        result = await supervisor_graph.ainvoke({
             "user_query": req.user_query,
             "messages": None,
             "clarified_requirements": None,
@@ -50,6 +58,7 @@ async def start_design(req: StartDesignRequest):
             status_code=502,
             detail=f"Design run failed after retries: {exc}"
         ) from exc
+    return format_response(thread_id, result)
 
 
 @app.post("/design/resume")

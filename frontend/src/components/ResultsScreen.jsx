@@ -1,6 +1,6 @@
 import { useState } from "react"
 import Icon from "./Icon.jsx"
-import { designSections } from "../data/dummyData.js"
+import { DESIGN_SECTIONS } from "../data/designSections.js"
 import {
   RequirementsSection,
   TrafficSection,
@@ -27,9 +27,14 @@ const SECTION_COMPONENTS = {
   microservice: MicroserviceSection,
 }
 
-export default function ResultsScreen({ query, onReset }) {
-  const [active, setActive] = useState(designSections[0].id)
+export default function ResultsScreen({ query, designState, onReset }) {
+  const involvesMedia = Boolean(designState?.clarified_requirements?.involves_media_content)
+  const visibleSections = DESIGN_SECTIONS.filter((s) => !s.optional || involvesMedia)
+
+  const [active, setActive] = useState(visibleSections[0].id)
   const ActiveSection = SECTION_COMPONENTS[active]
+  const activeMeta = visibleSections.find((s) => s.id === active) || visibleSections[0]
+  const errors = designState?.errors || []
 
   return (
     <div className="results-screen">
@@ -45,7 +50,7 @@ export default function ResultsScreen({ query, onReset }) {
         </div>
 
         <nav className="sidebar__nav">
-          {designSections.map((s) => (
+          {visibleSections.map((s) => (
             <button
               key={s.id}
               className={`sidebar__nav-item ${active === s.id ? "is-active" : ""}`}
@@ -57,6 +62,13 @@ export default function ResultsScreen({ query, onReset }) {
           ))}
         </nav>
 
+        {errors.length > 0 && (
+          <div className="sidebar__errors">
+            <Icon name="gauge" size={13} />
+            {errors.length} agent {errors.length === 1 ? "error" : "errors"} during this run
+          </div>
+        )}
+
         <button className="sidebar__reset" onClick={onReset}>
           <Icon name="arrow-right" size={14} className="sidebar__reset-icon" />
           Start a new design
@@ -64,7 +76,7 @@ export default function ResultsScreen({ query, onReset }) {
       </aside>
 
       <main className="results-content">
-        <ActiveSection />
+        <ActiveSection data={designState?.[activeMeta.stateKey]} />
       </main>
     </div>
   )
