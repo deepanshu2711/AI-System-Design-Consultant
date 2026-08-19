@@ -23,7 +23,10 @@ export default function App() {
 
   function handleClarifySubmit() {
     setStage(STAGE.LOADING)
-    setTimeout(() => setStage(STAGE.RESULTS), 3200)
+  }
+
+  function handleLoadingComplete() {
+    setStage(STAGE.RESULTS)
   }
 
   function handleReset() {
@@ -35,7 +38,7 @@ export default function App() {
     <div className="app-shell">
       {stage === STAGE.QUERY && <QueryScreen onSubmit={handleQuerySubmit} />}
       {stage === STAGE.CLARIFYING && <ClarifyingScreen query={query} onSubmit={handleClarifySubmit} />}
-      {stage === STAGE.LOADING && <LoadingScreen />}
+      {stage === STAGE.LOADING && <LoadingScreen onComplete={handleLoadingComplete} />}
       {stage === STAGE.RESULTS && <ResultsScreen query={query} onReset={handleReset} />}
     </div>
   )

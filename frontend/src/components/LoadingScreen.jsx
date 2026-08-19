@@ -1,48 +1,37 @@
 import { useEffect, useState } from "react"
-import Icon from "./Icon.jsx"
+import AgentGraph from "./AgentGraph.jsx"
+import { AGENT_NODES } from "../data/agentGraph.js"
 
-const STEPS = [
-  "Analyzing requirements",
-  "Estimating traffic",
-  "Planning capacity",
-  "Designing database schema",
-  "Designing cache layer",
-  "Designing message queues",
-  "Designing API surface",
-]
+const STEP_MS = 320
+const HOLD_MS = 550
 
-export default function LoadingScreen() {
+export default function LoadingScreen({ onComplete }) {
   const [activeIndex, setActiveIndex] = useState(0)
 
   useEffect(() => {
-    const id = setInterval(() => {
-      setActiveIndex((i) => Math.min(i + 1, STEPS.length - 1))
-    }, 450)
-    return () => clearInterval(id)
-  }, [])
+    if (activeIndex >= AGENT_NODES.length) {
+      const t = setTimeout(onComplete, HOLD_MS)
+      return () => clearTimeout(t)
+    }
+    const t = setTimeout(() => setActiveIndex((i) => i + 1), STEP_MS)
+    return () => clearTimeout(t)
+  }, [activeIndex, onComplete])
+
+  const current = AGENT_NODES[Math.min(activeIndex, AGENT_NODES.length - 1)]
+  const isDone = activeIndex >= AGENT_NODES.length
 
   return (
     <div className="loading-screen">
-      <div className="loading-screen__spinner">
-        <Icon name="loader" size={28} />
+      <div className="loading-screen__intro">
+        <span className="step-badge">{isDone ? "All agents finished" : "Agent pipeline running"}</span>
+        <h2>{isDone ? "Assembling your design" : `Running: ${current.label}`}</h2>
+        <p className="loading-screen__subtitle">
+          The supervisor hands off to one specialist agent at a time — this graph mirrors that route.
+        </p>
       </div>
-      <h2>Running the agent chain&hellip;</h2>
-      <p className="loading-screen__subtitle">Each specialist agent hands its output to the next.</p>
-      <ul className="loading-steps">
-        {STEPS.map((step, i) => (
-          <li
-            key={step}
-            className={
-              i < activeIndex ? "is-done" : i === activeIndex ? "is-active" : "is-pending"
-            }
-          >
-            <span className="loading-steps__marker">
-              {i < activeIndex ? <Icon name="check" size={12} /> : null}
-            </span>
-            {step}
-          </li>
-        ))}
-      </ul>
+      <div className="loading-screen__graph">
+        <AgentGraph activeIndex={activeIndex} />
+      </div>
     </div>
   )
 }

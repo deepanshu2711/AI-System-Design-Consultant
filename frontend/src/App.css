@@ -341,82 +341,83 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  padding: 56px 24px 40px;
+}
+
+.loading-screen__intro {
   text-align: center;
-  padding: 24px;
+  max-width: 480px;
+  margin-bottom: 12px;
 }
 
-.loading-screen__spinner {
-  color: var(--primary);
-  margin-bottom: 20px;
-  animation: spin 1.1s linear infinite;
+.loading-screen__intro .step-badge {
+  margin-bottom: 14px;
 }
 
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.loading-screen h2 {
-  font-size: 1.4rem;
+.loading-screen__intro h2 {
+  font-size: 1.35rem;
   font-weight: 700;
   margin-bottom: 8px;
+  min-height: 1.6em;
 }
 
 .loading-screen__subtitle {
   color: var(--text-muted);
-  margin-bottom: 32px;
-}
-
-.loading-steps {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  min-width: 280px;
-}
-
-.loading-steps li {
-  display: flex;
-  align-items: center;
-  gap: 10px;
   font-size: 0.92rem;
-  color: var(--text-faint);
-  transition: color 0.2s ease;
+  line-height: 1.5;
 }
 
-.loading-steps li.is-active {
-  color: var(--primary);
-  font-weight: 600;
+.loading-screen__graph {
+  width: 100%;
+  max-width: 340px;
 }
 
-.loading-steps li.is-done {
-  color: var(--text-muted);
+.agent-graph {
+  overflow: visible;
 }
 
-.loading-steps__marker {
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  border: 1.5px solid var(--border-strong);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
+.agent-graph__node-active {
+  animation: node-glow 1.4s ease-in-out infinite;
 }
 
-.loading-steps li.is-active .loading-steps__marker {
-  border-color: var(--primary);
-  background: var(--primary-soft);
+@keyframes node-glow {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 0 rgba(79, 70, 229, 0));
+  }
+  50% {
+    filter: drop-shadow(0 0 6px rgba(79, 70, 229, 0.35));
+  }
 }
 
-.loading-steps li.is-done .loading-steps__marker {
-  border-color: var(--success);
-  background: var(--success-soft);
-  color: var(--success);
+.agent-graph__pulse-ring {
+  animation: pulse-ring 1.4s ease-out infinite;
+  transform-origin: center;
+}
+
+@keyframes pulse-ring {
+  0% {
+    opacity: 0.9;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.08);
+  }
+}
+
+.agent-graph__dot {
+  animation: dot-blink 1s ease-in-out infinite;
+}
+
+@keyframes dot-blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.25;
+  }
 }
 
 /* ---------- results screen ---------- */
