@@ -24,7 +24,7 @@
 .btn--primary {
   background: var(--primary);
   color: #fff;
-  box-shadow: 0 1px 2px rgba(79, 70, 229, 0.25);
+  box-shadow: 0 1px 2px rgba(129, 140, 248, 0.25);
 }
 
 .btn--primary:hover {
@@ -80,8 +80,8 @@
 }
 
 .badge--accent {
-  background: #e6fbfa;
-  color: #0b7d7b;
+  background: var(--accent-soft);
+  color: var(--accent);
 }
 
 .pill {
@@ -106,8 +106,8 @@
 }
 
 .pill--accent {
-  background: #e6fbfa;
-  color: #0b7d7b;
+  background: var(--accent-soft);
+  color: var(--accent);
 }
 
 .pill--success {
@@ -116,7 +116,7 @@
 }
 
 .pill--danger {
-  background: #fdecec;
+  background: var(--danger-soft);
   color: var(--danger);
 }
 
@@ -383,10 +383,10 @@
 @keyframes node-glow {
   0%,
   100% {
-    filter: drop-shadow(0 0 0 rgba(79, 70, 229, 0));
+    filter: drop-shadow(0 0 0 rgba(129, 140, 248, 0));
   }
   50% {
-    filter: drop-shadow(0 0 6px rgba(79, 70, 229, 0.35));
+    filter: drop-shadow(0 0 6px rgba(129, 140, 248, 0.35));
   }
 }
 
@@ -768,8 +768,8 @@
 }
 
 .code-block {
-  background: #14152a;
-  color: #e3e6f7;
+  background: var(--code-bg);
+  color: var(--code-text);
   border-radius: var(--radius-sm);
   padding: 14px 16px;
   overflow-x: auto;
