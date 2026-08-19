@@ -1,22 +1,18 @@
-import Icon from "./Icon.jsx"
-import { Badge, Card, ConfidenceBadge, DataTable, PageHeader, Pill, ReasoningNote, StatGrid, BulletList, CodeBlock } from "./ui.jsx"
-import {
-  dummyRequirements,
-  dummyTraffic,
-  dummyCapacity,
-  dummyDatabase,
-  dummyCache,
-  dummyQueue,
-  dummyApi,
-  dummyCdn,
-  dummyStorage,
-  dummyMicroservice,
-} from "../data/dummyData.js"
+import { Badge, Card, ConfidenceBadge, DataTable, PageHeader, Pill, ReasoningNote, StatGrid, BulletList, CodeBlock, EmptyList } from "./ui.jsx"
 
 const fmt = (n) => new Intl.NumberFormat("en-US").format(n)
 
-export function RequirementsSection() {
-  const d = dummyRequirements
+function MissingSection({ icon, eyebrow, title, hint }) {
+  return (
+    <div className="section">
+      <PageHeader icon={icon} eyebrow={eyebrow} title={title} />
+      <EmptyList label={hint} />
+    </div>
+  )
+}
+
+export function RequirementsSection({ data: d }) {
+  if (!d) return <MissingSection icon="clipboard" eyebrow="Stage 1" title="Requirement Analysis" hint="No requirements returned yet." />
   return (
     <div className="section">
       <PageHeader
@@ -46,8 +42,8 @@ export function RequirementsSection() {
   )
 }
 
-export function TrafficSection() {
-  const d = dummyTraffic
+export function TrafficSection({ data: d }) {
+  if (!d) return <MissingSection icon="activity" eyebrow="Stage 2" title="Traffic Estimate" hint="No traffic estimate returned yet." />
   return (
     <div className="section">
       <PageHeader icon="activity" eyebrow="Stage 2" title="Traffic Estimate" description="Read/write load derived from DAU/MAU and usage assumptions." />
@@ -67,8 +63,8 @@ export function TrafficSection() {
   )
 }
 
-export function CapacitySection() {
-  const d = dummyCapacity
+export function CapacitySection({ data: d }) {
+  if (!d) return <MissingSection icon="server" eyebrow="Stage 3" title="Capacity Plan" hint="No capacity plan returned yet." />
   return (
     <div className="section">
       <PageHeader
@@ -93,8 +89,8 @@ export function CapacitySection() {
   )
 }
 
-export function DatabaseSection() {
-  const d = dummyDatabase
+export function DatabaseSection({ data: d }) {
+  if (!d) return <MissingSection icon="database" eyebrow="Stage 4" title="Database Design" hint="No database design returned yet." />
   return (
     <div className="section">
       <PageHeader
@@ -155,8 +151,8 @@ export function DatabaseSection() {
   )
 }
 
-export function CacheSection() {
-  const d = dummyCache
+export function CacheSection({ data: d }) {
+  if (!d) return <MissingSection icon="zap" eyebrow="Stage 5" title="Cache Design" hint="No cache design returned yet." />
   return (
     <div className="section">
       <PageHeader
@@ -205,8 +201,8 @@ export function CacheSection() {
   )
 }
 
-export function QueueSection() {
-  const d = dummyQueue
+export function QueueSection({ data: d }) {
+  if (!d) return <MissingSection icon="layers" eyebrow="Stage 6" title="Queue Design" hint="No queue design returned yet." />
   return (
     <div className="section">
       <PageHeader
@@ -261,8 +257,8 @@ export function QueueSection() {
   )
 }
 
-export function ApiSection() {
-  const d = dummyApi
+export function ApiSection({ data: d }) {
+  if (!d) return <MissingSection icon="code" eyebrow="Stage 7" title="API Design" hint="No API design returned yet." />
   return (
     <div className="section">
       <PageHeader
@@ -333,8 +329,8 @@ export function ApiSection() {
   )
 }
 
-export function CdnSection() {
-  const d = dummyCdn
+export function CdnSection({ data: d }) {
+  if (!d) return <MissingSection icon="globe" eyebrow="Stage 8" title="CDN Design" hint="CDN design only runs when the request involves media content." />
   return (
     <div className="section">
       <PageHeader
@@ -366,8 +362,8 @@ export function CdnSection() {
   )
 }
 
-export function StorageSection() {
-  const d = dummyStorage
+export function StorageSection({ data: d }) {
+  if (!d) return <MissingSection icon="hard-drive" eyebrow="Stage 9" title="Storage Design" hint="Storage design only runs when the request involves media content." />
   return (
     <div className="section">
       <PageHeader
@@ -389,8 +385,8 @@ export function StorageSection() {
   )
 }
 
-export function MicroserviceSection() {
-  const d = dummyMicroservice
+export function MicroserviceSection({ data: d }) {
+  if (!d) return <MissingSection icon="boxes" eyebrow="Stage 10" title="Microservice Design" hint="No microservice design returned yet." />
   return (
     <div className="section">
       <PageHeader icon="boxes" eyebrow="Stage 10" title="Microservice Design" description="Service boundaries and communication patterns." />

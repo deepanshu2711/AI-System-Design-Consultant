@@ -1,16 +1,28 @@
-# React + Vite
+# AI System Design Consultant — frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Vite + React UI for the LangGraph multi-agent backend in `../app`.
 
-Currently, two official plugins are available:
+## Running
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+Backend (needs a local Ollama daemon with `qwen2.5:3b` pulled — see the root `CLAUDE.md`):
 
-## React Compiler
+```
+uv run fastapi dev app/main.py
+```
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Frontend:
 
-## Expanding the Oxlint configuration
+```
+npm install
+npm run dev
+```
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+By default the frontend calls the backend at `http://localhost:8000`. Override with a `.env`
+file (see `.env.example`) setting `VITE_API_BASE_URL`.
+
+## Flow
+
+Query → clarifying questions (possibly multiple rounds — the backend can ask follow-ups) →
+agent pipeline runs → results dashboard. `src/api/designApi.js` calls `POST /design/start` and
+`POST /design/resume`; `src/components/AgentGraph.jsx` visualizes the supervisor's routing
+(`app/agents/supervisor.py`) while a request is in flight.

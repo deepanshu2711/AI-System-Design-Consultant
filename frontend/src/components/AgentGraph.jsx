@@ -41,8 +41,17 @@ function connectorColor(targetStatus) {
   return "var(--border-strong)"
 }
 
-function Connector({ d, color }) {
-  return <path d={d} fill="none" stroke={color} strokeWidth={2} />
+function Connector({ d, color, animated, dashed }) {
+  return (
+    <g>
+      <path d={d} fill="none" stroke={color} strokeWidth={2} strokeDasharray={dashed ? "4 4" : undefined} />
+      {animated && (
+        <circle r={3.2} fill="var(--primary)" className="agent-graph__flow-dot">
+          <animateMotion dur="0.9s" repeatCount="indefinite" path={d} />
+        </circle>
+      )}
+    </g>
+  )
 }
 
 function Node({ pos, node, state }) {
@@ -56,7 +65,7 @@ function Node({ pos, node, state }) {
       : { stroke: "var(--border-strong)", fill: "var(--surface)", text: "var(--text-faint)" }
 
   return (
-    <g>
+    <g className={state === "done" || state === "skipped" ? "agent-graph__node-enter" : ""}>
       {state === "active" && (
         <rect
           x={pos.x - 4}
@@ -79,10 +88,12 @@ function Node({ pos, node, state }) {
         fill={tone.fill}
         stroke={tone.stroke}
         strokeWidth={1.5}
+        strokeDasharray={state === "skipped" ? "5 4" : undefined}
+        opacity={state === "skipped" ? 0.6 : 1}
         className={state === "active" ? "agent-graph__node-active" : ""}
       />
       <g transform={`translate(${pos.x + 14}, ${cy - 9})`} style={{ color: tone.text }}>
-        {state === "done" ? <Icon name="check" size={18} /> : <Icon name={node.icon} size={18} />}
+        {state === "done" ? <Icon name="check" size={18} /> : state === "skipped" ? <Icon name="x" size={16} /> : <Icon name={node.icon} size={18} />}
       </g>
       <text
         x={pos.x + 40}
@@ -90,7 +101,7 @@ function Node({ pos, node, state }) {
         dominantBaseline="middle"
         fontSize={state === "active" ? 12.5 : 12}
         fontWeight={state === "active" ? 700 : 500}
-        fill={state === "pending" ? "var(--text-faint)" : "var(--text)"}
+        fill={state === "pending" ? "var(--text-faint)" : state === "skipped" ? "var(--text-faint)" : "var(--text)"}
       >
         {node.label}
       </text>
@@ -101,9 +112,18 @@ function Node({ pos, node, state }) {
   )
 }
 
-export default function AgentGraph({ activeIndex }) {
-  const states = AGENT_NODES.map((_, i) => status(i, activeIndex))
-  const doneState = activeIndex >= AGENT_NODES.length ? "done" : "pending"
+// activeIndex drives the loading-screen "one node running at a time" mode.
+// Pass nodeStates ({ [nodeId]: "done" | "skipped" | "pending" }) instead for
+// a results-screen summary of what actually ran on this design.
+export default function AgentGraph({ activeIndex, nodeStates }) {
+  const states = AGENT_NODES.map((node, i) => (nodeStates ? nodeStates[node.id] || "pending" : status(i, activeIndex)))
+  const doneState = nodeStates
+    ? states.every((s) => s === "done" || s === "skipped")
+      ? "done"
+      : "pending"
+    : activeIndex >= AGENT_NODES.length
+    ? "done"
+    : "pending"
 
   const elbow = (x1, y1, x2, y2) => {
     const midY = y1 + (y2 - y1) / 2
@@ -127,6 +147,7 @@ export default function AgentGraph({ activeIndex }) {
             key={`c-${i}`}
             d={`M${CENTER_X},${p.y + NODE_H} L${CENTER_X},${next.y}`}
             color={connectorColor(targetState)}
+            animated={targetState === "active"}
           />
         )
       })}
@@ -135,20 +156,27 @@ export default function AgentGraph({ activeIndex }) {
       <Connector
         d={elbow(CENTER_X, POS[7].y + NODE_H, POS[8].x + POS[8].width / 2, POS[8].y)}
         color={connectorColor(states[8])}
+        animated={states[8] === "active"}
+        dashed={states[8] === "skipped"}
       />
       <Connector
         d={elbow(CENTER_X, POS[7].y + NODE_H, POS[9].x + POS[9].width / 2, POS[9].y)}
         color={connectorColor(states[9])}
+        animated={states[9] === "active"}
+        dashed={states[9] === "skipped"}
       />
 
       {/* branch left/right -> microservice */}
       <Connector
         d={elbow(POS[8].x + POS[8].width / 2, POS[8].y + NODE_H, CENTER_X, POS[10].y)}
         color={connectorColor(states[10])}
+        animated={states[10] === "active"}
+        dashed={states[8] === "skipped"}
       />
       <Connector
         d={elbow(POS[9].x + POS[9].width / 2, POS[9].y + NODE_H, CENTER_X, POS[10].y)}
         color={connectorColor(states[10])}
+        dashed={states[9] === "skipped"}
       />
 
       {/* microservice -> done */}
