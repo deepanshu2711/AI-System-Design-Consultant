@@ -64,6 +64,15 @@ const PATHS = {
       <path d="M12 3a9 9 0 0 0-9 9M12 3a9 9 0 0 1 9 9M14.5 11.5 18 8" />
     </>
   ),
+  network: (
+    <>
+      <circle cx="12" cy="5" r="2.5" />
+      <circle cx="5" cy="19" r="2.5" />
+      <circle cx="19" cy="19" r="2.5" />
+      <path d="M12 7.5 7 16.5M12 7.5l5 9M7.5 19h9" />
+    </>
+  ),
+  x: <path d="M18 6 6 18M6 6l12 12" />,
 }
 
 export default function Icon({ name, size = 18, strokeWidth = 1.8, className = "" }) {

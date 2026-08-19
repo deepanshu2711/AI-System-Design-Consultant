@@ -1,5 +1,6 @@
 import { useState } from "react"
 import Icon from "./Icon.jsx"
+import PipelineOverlay from "./PipelineOverlay.jsx"
 import { DESIGN_SECTIONS } from "../data/designSections.js"
 import {
   RequirementsSection,
@@ -32,6 +33,7 @@ export default function ResultsScreen({ query, designState, onReset }) {
   const visibleSections = DESIGN_SECTIONS.filter((s) => !s.optional || involvesMedia)
 
   const [active, setActive] = useState(visibleSections[0].id)
+  const [showPipeline, setShowPipeline] = useState(false)
   const ActiveSection = SECTION_COMPONENTS[active]
   const activeMeta = visibleSections.find((s) => s.id === active) || visibleSections[0]
   const errors = designState?.errors || []
@@ -40,10 +42,15 @@ export default function ResultsScreen({ query, designState, onReset }) {
     <div className="results-screen">
       <aside className="sidebar">
         <div className="sidebar__header">
-          <span className="sidebar__badge">
-            <Icon name="sparkles" size={14} />
-            Design complete
-          </span>
+          <div className="sidebar__header-row">
+            <span className="sidebar__badge">
+              <Icon name="sparkles" size={14} />
+              Design complete
+            </span>
+            <button className="sidebar__pipeline-btn" onClick={() => setShowPipeline(true)} title="View agent pipeline">
+              <Icon name="network" size={15} />
+            </button>
+          </div>
           <p className="sidebar__query" title={query}>
             &ldquo;{query}&rdquo;
           </p>
@@ -78,6 +85,8 @@ export default function ResultsScreen({ query, designState, onReset }) {
       <main className="results-content">
         <ActiveSection data={designState?.[activeMeta.stateKey]} />
       </main>
+
+      {showPipeline && <PipelineOverlay designState={designState} onClose={() => setShowPipeline(false)} />}
     </div>
   )
 }
