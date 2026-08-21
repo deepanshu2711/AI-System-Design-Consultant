@@ -1,5 +1,8 @@
+import logging
 import time
 from functools import wraps
+
+logger = logging.getLogger(__name__)
 
 
 def timed_node(name: str):
@@ -13,7 +16,7 @@ def timed_node(name: str):
                 return result
             finally:
                 elapsed = time.perf_counter() - start
-                print(f"⏱️ {name}: {elapsed:.2f}s")
+                logger.info("%s: %.2fs", name, elapsed)
 
         return wrapper
 

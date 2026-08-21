@@ -14,7 +14,8 @@ from app.utils.timing import timed_node
 from app.utils.constants import MAX_TOOL_ITERATIONS
 
 
-parser = PydanticOutputParser(pydantic_object=TrafficEstimate)
+format_instructions = PydanticOutputParser(
+    pydantic_object=TrafficEstimate).get_format_instructions()
 llm_with_tools = llm.bind_tools([calculator])
 llm_with_structure = llm.with_structured_output(TrafficEstimate)
 
@@ -32,7 +33,7 @@ prompt = ChatPromptTemplate.from_messages([
      "Do not output this JSON yourself — just state the numbers clearly in "
      "your reasoning once you're done, then stop calling tools."),
 ]).partial(
-    format_instructions=parser.get_format_instructions(),
+    format_instructions=format_instructions,
     max_tool_iterations=MAX_TOOL_ITERATIONS,
 )
 
