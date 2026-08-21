@@ -11,11 +11,10 @@ class TrafficEstimate(BaseModel):
     avg_response_size_kb: float
     reasoning: str
 
-    # NOTE: Comment it for faster testing
-    # @model_validator(mode="after")
-    # def validate_consistency(self):
-    #     if self.dau > self.mau:
-    #         raise ValueError("DAU cannot exceed MAU — check your numbers")
-    #     if self.peak_rps < self.avg_rps:
-    #         raise ValueError("Peak RPS cannot be lower than average RPS")
-    #     return self
+    @model_validator(mode="after")
+    def validate_consistency(self):
+        if self.dau > self.mau:
+            raise ValueError("DAU cannot exceed MAU — check your numbers")
+        if self.peak_rps < self.avg_rps:
+            raise ValueError("Peak RPS cannot be lower than average RPS")
+        return self
