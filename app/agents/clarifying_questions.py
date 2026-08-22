@@ -1,6 +1,3 @@
-import asyncio
-
-from langchain_core.output_parsers import PydanticOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from langgraph.types import Command, interrupt
 
@@ -11,23 +8,19 @@ from app.utils.error_handling import catch_agent_errors
 from app.utils.llm_factory import llm
 from app.utils.timing import timed_node
 
-questions_parser = PydanticOutputParser(pydantic_object=ClarifyingQuestions)
-assessment_parser = PydanticOutputParser(
-    pydantic_object=ClarificationAssessment)
-
 questions_prompt = ChatPromptTemplate.from_messages([
     ("system", CLARIFYING_QUESTIONS_SYSTEM_PROMPT),
     ("human",
      "Product prompt: \"{user_query}\"\n\nGenerate the clarifying questions."),
 ])
-questions_chain = questions_prompt | llm | questions_parser
+questions_chain = questions_prompt | llm.with_structured_output(ClarifyingQuestions)
 
 assessment_prompt = ChatPromptTemplate.from_messages([
     ("system", FOLLOWUP_ASSESSMENT_SYSTEM_PROMPT),
     ("human",
      "Product prompt: \"{user_query}\"\n\nUser's answers so far:\n{answers}\n\nAssess if follow-up is needed."),
 ])
-assessment_chain = assessment_prompt | llm | assessment_parser
+assessment_chain = assessment_prompt | llm.with_structured_output(ClarificationAssessment)
 
 MAX_CLARIFICATION_ROUNDS = 3
 

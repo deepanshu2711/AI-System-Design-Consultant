@@ -10,11 +10,8 @@ answers. Focus on things that genuinely branch the design:
 - Feature scope (what's explicitly out of scope?)
 - Read/write pattern (is this read-heavy, write-heavy, balanced?)
 
-Respond only with JSON matching the schema:
-{{
-  "questions": ["string", ...],
-  "reasoning": "string explaining why these specific questions matter"
-}}
+Alongside the questions, briefly explain your reasoning — why these specific
+questions matter for how the system gets designed.
 """
 
 FOLLOWUP_ASSESSMENT_SYSTEM_PROMPT = """You are reviewing a user's answers to clarifying 
@@ -26,13 +23,8 @@ with no number, or "make it fast" with no latency target). Do NOT ask follow-ups
 be thorough — most answers are good enough as-is. Prefer needs_followup=false unless 
 there's a real gap.
 
-If a follow-up is needed, ask AT MOST 2 more questions, and only about the specific 
+If a follow-up is needed, ask AT MOST 2 more questions, and only about the specific
 vague answers — do not re-ask anything already answered clearly.
 
-Respond only with JSON matching the schema:
-{{
-  "needs_followup": bool,
-  "followup_questions": ["string", ...],
-  "reasoning": "string"
-}}
+Briefly explain your reasoning for the assessment.
 """

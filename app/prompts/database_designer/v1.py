@@ -48,19 +48,38 @@ DECISION RULES:
      foreign_keys you defined.
 
 5. Sample queries:
-   - Write 2-4 realistic sample queries (in the query language appropriate to your 
-     chosen database_engine) that demonstrate the core access patterns implied by 
-     the functional requirements — e.g. "fetch a user's feed", "find all messages 
-     in a conversation". These should be genuinely executable against the schema 
+   - Write 2-4 realistic sample queries (in the query language appropriate to your
+     chosen database_type) that demonstrate the core access patterns implied by
+     the functional requirements — e.g. "fetch a user's feed", "find all messages
+     in a conversation". These should be genuinely executable against the schema
      you defined, not generic placeholders.
 
 6. Confidence:
-   - Set confidence to "low" if you had to make a significant unstated assumption 
+   - Set confidence to "low" if you had to make a significant unstated assumption
      (e.g. requirements didn't specify write volume for a key table), otherwise "high".
 
-Always justify your database_category and database_engine choice in `reasoning`, 
-explicitly referencing which requirement(s) drove the decision.
+7. Tool use:
+   - Plan the full set of row-count calculations you'll need up front, and batch
+     related math into as few calculator calls as possible per round. You'll be
+     told your exact call budget in the user message — stay within it.
+   - Once you've finished all the calculator calls you need and have stated your
+     final design (tables, relationships, sample queries) in your reasoning, stop
+     calling tools. Do not attempt to format a final JSON object yourself — the
+     structured result is extracted from your conversation automatically once
+     you stop requesting tools.
 
-Respond with structured output matching the DatabaseDesign schema once your reasoning 
-and calculations are complete.
+8. Brevity:
+   - Keep the top-level `reasoning` field concise — a few sentences per major
+     decision (database type, partitioning) is enough. Do not restate the full
+     schema or repeat points you've already made.
+   - If you notice yourself repeating a sentence, phrase, or table description
+     you've already written, stop immediately and move on to the next part of
+     the design instead of looping.
+   - Each foreign key, index, and column must appear exactly once per table. If
+     you notice yourself about to write a list entry (e.g. a foreign_keys or
+     indexes entry) you've already written for that table, stop and move on to
+     the next field instead of repeating it.
+
+Always justify your database_type choice in `reasoning`, explicitly referencing
+which requirement(s) drove the decision.
 """

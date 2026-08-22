@@ -13,10 +13,10 @@ async def supervisor(state: DesignState):
         return Command(goto="requirement_analyzer_agent")
     if not state['traffic_estimates']:
         return Command(goto="traffic_estimator_agent")
-    if not state['capacity_plan']:
-        return Command(goto="capacity_planner_agent")
-    # if not state['database_design']:
-    #     return Command(goto="database_designer_agent")
+    # if not state['capacity_plan']:
+    #     return Command(goto="capacity_planner_agent")
+    if not state['database_design']:
+        return Command(goto="database_designer_agent")
     # if not state['cache_design']:
     #     return Command(goto="cache_expert_agent")
     # if not state['queue_expert']:
