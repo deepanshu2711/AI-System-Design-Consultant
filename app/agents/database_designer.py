@@ -10,7 +10,7 @@ from app.state.desgin_state import DesignState
 
 from app.tools.calculator import calculator
 from app.utils.error_handling import catch_agent_errors
-from app.utils.llm_factory import llm
+from app.utils.llm_factory import llm, build_llm
 from app.utils.timing import timed_node
 from app.utils.constants import MAX_TOOL_ITERATIONS
 
@@ -18,7 +18,8 @@ from app.utils.constants import MAX_TOOL_ITERATIONS
 format_instructions = PydanticOutputParser(
     pydantic_object=DatabaseDesign).get_format_instructions()
 llm_with_tool = llm.bind_tools([calculator])
-llm_with_structure = llm.with_structured_output(DatabaseDesign)
+llm_structured = build_llm(num_ctx=12288, num_predict=4608, timeout=180)
+llm_with_structure = llm_structured.with_structured_output(DatabaseDesign)
 
 
 prompt = ChatPromptTemplate.from_messages([
