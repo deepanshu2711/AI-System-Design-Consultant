@@ -35,6 +35,8 @@ System design interviews and real architecture reviews follow a repeatable shape
 
 ## How it works
 
+![Supervisor graph](./supervisor-graph.png)
+
 ```
             ┌─────────────┐
    ┌───────▶│  supervisor │◀───────┐
