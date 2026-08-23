@@ -5,10 +5,11 @@ _DEFAULTS = dict(
     temperature=0,
     repeat_penalty=1.3,
     repeat_last_n=256,
+    base_url=""
 )
 
 
-def build_llm(*, num_ctx: int = 8192, num_predict: int = 3072, timeout: int = 120) -> ChatOllama:
+def build_llm(*, num_ctx: int = 8192, num_predict: int = 3072, timeout: int = 180) -> ChatOllama:
     return ChatOllama(
         **_DEFAULTS,
         num_ctx=num_ctx,
