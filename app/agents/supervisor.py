@@ -4,35 +4,42 @@ from app.state.desgin_state import DesignState
 from langgraph.types import Command
 from app.utils.timing import timed_node
 
+MAX_AGENT_FAILURES = 3
+
+
+def _route_if_healthy(state: DesignState, node_name: str):
+    failures = sum(1 for error in (state.get("errors") or []) if error.node == node_name)
+    return node_name if failures < MAX_AGENT_FAILURES else END
+
 
 @timed_node("supervisor")
 async def supervisor(state: DesignState):
     if not state['user_clarifications']:
-        return Command(goto="clarifying_questions_agent")
+        return Command(goto=_route_if_healthy(state, "clarifying_questions_agent"))
     if not state['clarified_requirements']:
-        return Command(goto="requirement_analyzer_agent")
+        return Command(goto=_route_if_healthy(state, "requirement_analyzer_agent"))
     if not state['traffic_estimates']:
-        return Command(goto="traffic_estimator_agent")
+        return Command(goto=_route_if_healthy(state, "traffic_estimator_agent"))
     if not state['capacity_plan']:
-        return Command(goto="capacity_planner_agent")
+        return Command(goto=_route_if_healthy(state, "capacity_planner_agent"))
     if not state['database_design']:
-        return Command(goto="database_designer_agent")
+        return Command(goto=_route_if_healthy(state, "database_designer_agent"))
     if not state['cache_design']:
-        return Command(goto="cache_expert_agent")
+        return Command(goto=_route_if_healthy(state, "cache_expert_agent"))
     if not state['queue_expert']:
-        return Command(goto="queue_expert_agent")
+        return Command(goto=_route_if_healthy(state, "queue_expert_agent"))
     if not state['api_design']:
-        return Command(goto="api_designer_agent")
+        return Command(goto=_route_if_healthy(state, "api_designer_agent"))
 
     requirements = state.get('clarified_requirements')
     needs_media = getattr(requirements, 'involves_media_content', False)
 
     if needs_media and not state['cdn_design']:
-        return Command(goto="cdn_expert_agent")
+        return Command(goto=_route_if_healthy(state, "cdn_expert_agent"))
     if needs_media and not state['storage_design']:
-        return Command(goto="storage_expert_agent")
+        return Command(goto=_route_if_healthy(state, "storage_expert_agent"))
 
     if not state['microservice_design']:
-        return Command(goto="microservice_expert_agent")
+        return Command(goto=_route_if_healthy(state, "microservice_expert_agent"))
 
     return Command(goto=END)
