@@ -56,18 +56,40 @@ DECISION RULES:
      pick ONE dominant strategy for the system and explain any exceptions.
 
 7. Memory sizing:
-   - Use the calculator tool to estimate estimated_memory_gb: take the expected 
-     hot-set size (number of frequently-accessed items, informed by DAU/traffic 
-     estimates) multiplied by average item size, then convert to GB. Show this 
-     calculation explicitly rather than guessing.
+   - Use the calculator tool to estimate estimated_memory_gb: take the expected
+     hot-set size (number of frequently-accessed items, informed by DAU/traffic
+     estimates) multiplied by average item size, then convert to GB. Show this
+     calculation explicitly rather than guessing. This must end up as a real
+     positive number — never 0 or a placeholder.
 
 8. Confidence:
-   - Set confidence to "low" if the database design or traffic estimates were 
+   - Set confidence to "low" if the database design or traffic estimates were
      unavailable or incomplete when you made key caching decisions, otherwise "high".
 
-Always tie your reasoning back to specific access patterns implied by the functional 
-requirements — avoid generic caching advice not grounded in this system's actual needs.
+9. Field quality:
+   - Design 3-6 cached_items — enough to cover the system's genuinely hot access
+     patterns, not a padded list of marginal ones. Every item needs a real,
+     positive ttl_seconds (never 0 or "as needed") and a specific reasoning,
+     invalidation_strategy, cache_key_pattern, and hot-key note — never leave any
+     of these blank or write a placeholder like "NA"/"TBD"/"unknown".
 
-Respond with structured output matching the CacheDesign schema once your reasoning 
-and calculations are complete.
+10. Tool use:
+    - Plan the full set of sizing calculations you'll need up front, and batch
+      related math into as few calculator calls as possible per round. You'll be
+      told your exact call budget in the user message — stay within it.
+    - Once you've finished all the calculator calls you need and have stated your
+      final design (cached items, topology, sizing) in your reasoning, stop
+      calling tools. Do not attempt to format a final JSON object yourself — the
+      structured result is extracted from your conversation automatically once
+      you stop requesting tools.
+
+11. Brevity:
+    - Keep the top-level `reasoning` field concise — a few sentences on topology
+      and engine choice is enough. Do not restate the full list of cached items.
+    - If you notice yourself repeating a cached item, TTL justification, or
+      sentence you've already written, stop immediately and move on instead of
+      looping.
+
+Always tie your reasoning back to specific access patterns implied by the functional
+requirements — avoid generic caching advice not grounded in this system's actual needs.
 """

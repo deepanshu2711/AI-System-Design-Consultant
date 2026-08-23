@@ -19,11 +19,18 @@ CRITICAL RULES:
 4. For compute node estimates, use this rule of thumb unless requirements suggest 
    otherwise: 1 server instance handles roughly 500-1000 RPS for typical JSON API 
    workloads. Use the calculator to divide peak RPS by this per-node capacity.
-5. For bandwidth, compute peak Mbps from peak RPS * average response size, converting 
+5. For bandwidth, compute peak Mbps from peak RPS * average response size, converting
    KB to Mb correctly (1 KB = 0.008 Mb).
+6. Plan the full set of calculations you'll need up front, and batch related math
+   into as few calculator calls as possible per round. You'll be told your exact
+   call budget in the user message — stay within it.
+7. Once you've finished all the calculator calls you need and have stated your
+   final numbers (storage, bandwidth, compute nodes, replication factor) in your
+   reasoning, stop calling tools. Do not attempt to format a final JSON object
+   yourself — the structured result is extracted from your conversation
+   automatically once you stop requesting tools.
 
-Respond with ONLY structured output matching the CapacityPlan schema — no extra text.
-If you are not confident in any part of your estimate (e.g. missing data, had to guess 
-heavily), set confidence to "low" and explain why in reasoning. Otherwise set 
+If you are not confident in any part of your estimate (e.g. missing data, had to guess
+heavily), set confidence to "low" and explain why in reasoning. Otherwise set
 confidence to "high".
 """

@@ -27,13 +27,13 @@ def welcome():
     return {"message": "Welcome to AI System Design Condultant"}
 
 
-@app.post('/design/start')
-async def start_design(req: StartDesignRequest):
+@app.get('/design/start')
+async def start_design():
     thread_id = str(uuid.uuid4())
     print('start design thread id', thread_id)
     try:
         result = await supervisor_graph.ainvoke({
-            "user_query": req.user_query,
+            "user_query": "Build a simple chat applicaiton",
             "messages": None,
             "clarified_requirements": None,
             "user_clarifications": None,

@@ -23,14 +23,16 @@ DECISION RULES:
    - Design at most 6-8 core tables — the ones that directly serve the system's
      functional requirements. Do not add supporting/lookup tables beyond that unless
      a requirement explicitly demands one.
-   - Every table must have an explicit primary key.
-   - Add foreign keys wherever a real relationship exists between tables — do not
-     leave relationships implicit.
    - Add at most 2-4 indexes per table — pick the ones that matter most for the
      system's core query patterns. Justify each index with a one-line reasoning
      tied to a specific query pattern.
    - Use appropriate data types — do not default everything to string/text.
    - Keep column and index `description`/`reasoning` fields to one concise sentence.
+   - Every table must have at least one column, and `description`/`estimated_row_count`
+     must be a real, specific value — never leave them blank or write a placeholder
+     like "NA"/"TBD". If you don't have enough information to estimate
+     `estimated_row_count` precisely, give your best rough estimate (e.g. "~500K rows,
+     growing ~5K/month") rather than leaving it blank.
 
 3. Scale-awareness:
    - Use the calculator tool to estimate row counts per table per year, using DAU/
@@ -42,25 +44,53 @@ DECISION RULES:
      for it.
 
 4. Relationships:
-   - List every meaningful relationship between tables in the `relationships` field, 
-     separate from the foreign_keys embedded in each table — this is used to draw 
-     the system's ER diagram, so it must be complete and consistent with the 
-     foreign_keys you defined.
+   - List every meaningful relationship between tables in the `relationships` field —
+     this is used to draw the system's ER diagram, so it must be complete and
+     consistent with the tables you defined.
+   - Every `from_table`/`to_table` in `relationships` must exactly match a table name
+     you actually included in your final table list — never reference a table you
+     mentioned in passing but did not fully define.
 
 5. Sample queries:
-   - Write 2-4 realistic sample queries (in the query language appropriate to your 
-     chosen database_engine) that demonstrate the core access patterns implied by 
-     the functional requirements — e.g. "fetch a user's feed", "find all messages 
-     in a conversation". These should be genuinely executable against the schema 
+   - Write 2-4 realistic sample queries (in the query language appropriate to your
+     chosen database_type) that demonstrate the core access patterns implied by
+     the functional requirements — e.g. "fetch a user's feed", "find all messages
+     in a conversation". These should be genuinely executable against the schema
      you defined, not generic placeholders.
+   - Every table and column name referenced in a sample query must exist in the
+     tables/columns you defined above — do not reference tables or fields (e.g. from
+     an earlier draft of the design) that didn't make it into your final table list.
 
 6. Confidence:
-   - Set confidence to "low" if you had to make a significant unstated assumption 
+   - Set confidence to "low" if you had to make a significant unstated assumption
      (e.g. requirements didn't specify write volume for a key table), otherwise "high".
 
-Always justify your database_category and database_engine choice in `reasoning`, 
-explicitly referencing which requirement(s) drove the decision.
+7. Tool use:
+   - Plan the full set of row-count calculations you'll need up front, and batch
+     related math into as few calculator calls as possible per round. You'll be
+     told your exact call budget in the user message — stay within it.
+   - Once you've finished all the calculator calls you need and have stated your
+     final design (tables, relationships, sample queries) in your reasoning, stop
+     calling tools. Do not attempt to format a final JSON object yourself — the
+     structured result is extracted from your conversation automatically once
+     you stop requesting tools.
 
-Respond with structured output matching the DatabaseDesign schema once your reasoning 
-and calculations are complete.
+8. Brevity:
+   - Keep the top-level `reasoning` field concise — a few sentences per major
+     decision (database type, partitioning) is enough. Do not restate the full
+     schema or repeat points you've already made.
+   - If you notice yourself repeating a sentence, phrase, or table description
+     you've already written, stop immediately and move on to the next part of
+     the design instead of looping.
+   - Each index and column must appear exactly once per table. If you notice
+     yourself about to write a list entry (e.g. an indexes entry) you've already
+     written for that table, stop and move on to the next field instead of
+     repeating it.
+   - Before finalizing, count your tables: you should have defined 6-8 in your
+     reasoning. If you find yourself with far fewer, go back and make sure you
+     didn't drop tables you mentioned earlier (e.g. for likes, messages, followers)
+     without finishing their definition.
+
+Always justify your database_type choice in `reasoning`, explicitly referencing
+which requirement(s) drove the decision.
 """
