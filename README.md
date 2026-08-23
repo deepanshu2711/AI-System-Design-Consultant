@@ -37,23 +37,6 @@ System design interviews and real architecture reviews follow a repeatable shape
 
 ![Supervisor graph](./supervisor-graph.png)
 
-```
-            ┌─────────────┐
-   ┌───────▶│  supervisor │◀───────┐
-   │        └──────┬──────┘        │
-   │               │ routes to next│
-   │        empty field in state   │
-   │               ▼               │
-   │   ┌───────────────────────┐   │
-   │   │   specialist agent     │  │
-   │   │  (requirements, traffic,│ │
-   │   │   capacity, DB/cache/  │  │
-   │   │   queue/CDN, API, ...) │──┘
-   │   └───────────┬────────────┘
-   │               │ writes typed artifact
-   │               ▼
-   └────────  DesignState  ────────▶ assembled design doc
-```
 
 - A `StateGraph` (`app/grpahs/supervisor_graph.py`) holds a shared `DesignState` (`app/state/desgin_state.py`).
 - `supervisor` (`app/agents/supervisor.py`) is the sole router: it inspects which fields of the state are still empty and dispatches to the next specialist agent.
