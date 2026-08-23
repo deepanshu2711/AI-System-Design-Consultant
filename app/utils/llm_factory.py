@@ -5,7 +5,6 @@ _DEFAULTS = dict(
     temperature=0,
     repeat_penalty=1.3,
     repeat_last_n=256,
-    base_url=""
 )
 
 
