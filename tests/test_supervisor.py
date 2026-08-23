@@ -5,6 +5,7 @@ from langgraph.graph import END
 
 from app.agents.supervisor import supervisor
 from app.schema.error import make_agent_error
+from app.utils.helpers import format_response
 
 
 class SupervisorFailureCircuitTests(unittest.TestCase):
@@ -31,6 +32,15 @@ class SupervisorFailureCircuitTests(unittest.TestCase):
         command = asyncio.run(supervisor(state))
 
         self.assertEqual(command.goto, END)
+        self.assertEqual(command.update, {"run_status": "failed"})
+
+    def test_failed_run_is_not_reported_as_complete(self):
+        response = format_response(
+            "thread-1",
+            {"run_status": "failed", "errors": ["agent failed"]},
+        )
+
+        self.assertEqual(response["status"], "failed")
 
 
 if __name__ == "__main__":

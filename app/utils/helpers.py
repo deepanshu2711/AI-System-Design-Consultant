@@ -9,7 +9,7 @@ def format_response(thread_id: str, result: dict) -> dict:
         }
 
     return {
-        "status": "complete",
+        "status": result.get("run_status", "complete"),
         "thread_id": thread_id,
         "state": result,
     }
