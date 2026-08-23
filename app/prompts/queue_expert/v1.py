@@ -58,14 +58,34 @@ DECISION RULES:
      broker types — justify each separately.
 
 7. Throughput estimation:
-   - Use the calculator tool to estimate estimated_throughput_msgs_per_sec from 
-     traffic_estimates (e.g. writes/sec that trigger async work). Show this 
-     calculation explicitly.
+   - Use the calculator tool to estimate estimated_throughput_msgs_per_sec from
+     traffic_estimates (e.g. writes/sec that trigger async work). Show this
+     calculation explicitly. This must end up as a real positive number — never
+     0 or a placeholder.
 
 8. Confidence:
-   - Set confidence to "low" if traffic estimates or database design were 
+   - Set confidence to "low" if traffic estimates or database design were
      unavailable when you made key decisions, otherwise "high".
 
-Respond with structured output matching the QueueDesign schema once your reasoning 
-and calculations are complete.
+9. Field quality:
+   - Design 3-6 topics — enough to cover the system's genuine async work, not a
+     padded list of marginal ones. Every topic needs a specific reasoning,
+     message_schema, retry_policy, and dead_letter_strategy — never leave any of
+     these blank or write a placeholder like "NA"/"TBD"/"unknown".
+
+10. Tool use:
+    - Plan the full set of throughput calculations you'll need up front, and
+      batch related math into as few calculator calls as possible per round.
+      You'll be told your exact call budget in the user message — stay within it.
+    - Once you've finished all the calculator calls you need and have stated
+      your final design (topics, broker choice, throughput) in your reasoning,
+      stop calling tools. Do not attempt to format a final JSON object
+      yourself — the structured result is extracted from your conversation
+      automatically once you stop requesting tools.
+
+11. Brevity:
+    - Keep the top-level `reasoning` field concise — a few sentences on broker
+      choice and topology is enough. Do not restate the full list of topics.
+    - If you notice yourself repeating a topic, retry policy, or sentence
+      you've already written, stop immediately and move on instead of looping.
 """

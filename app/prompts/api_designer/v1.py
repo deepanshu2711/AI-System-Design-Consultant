@@ -22,7 +22,7 @@ DECISION RULES:
    - Use REST conventions correctly: GET for reads (no side effects), POST for
      creation, PUT/PATCH for updates, DELETE for removal. Do not use GET for
      operations with side effects.
-   - Path parameters for resource identifiers (e.g. /users/{user_id}), query
+   - Path parameters for resource identifiers (e.g. /users/{{user_id}}), query
      parameters for filtering/pagination, request body for creation/update payloads.
 
 2. Request/response examples:
@@ -54,9 +54,11 @@ DECISION RULES:
      smaller, stable datasets.
 
 6. Rate limiting:
-   - Note rate_limit_notes per endpoint where relevant, especially for
-     write-heavy or expensive endpoints (e.g. search, uploads). One short sentence,
-     or "N/A" if not relevant — do not pad this field.
+   - State rate_limit_notes for every endpoint in one short sentence. For
+     write-heavy or expensive endpoints (e.g. search, uploads), state the actual
+     limit and window (e.g. "10 requests/min per user"). For endpoints where rate
+     limiting isn't a real concern, say so concretely (e.g. "no dedicated limit —
+     low-frequency admin-only endpoint") rather than writing "N/A".
 
 7. Confidence:
    - Set confidence to "low" if the database design was unavailable or incomplete
@@ -68,7 +70,15 @@ DECISION RULES:
    - `description` fields (endpoint and response) are one short sentence each.
    - `versioning_strategy`, `auth_strategy`, `pagination_strategy`, and
      `error_format` are each one sentence stating the choice, not the rationale.
+   - If you notice yourself repeating an endpoint, JSON example, or sentence you've
+     already written, stop immediately and move on instead of looping.
 
-Respond with structured output matching the ApiDesign schema once your endpoints and
-JSON examples are validated.
+9. Tool use:
+   - You'll be told your exact json_formatter call budget in the user message —
+     stay within it; batch validation so you don't run out of rounds before every
+     example is checked.
+   - Once every JSON example is validated and you've stated your final design
+     (endpoints, auth, pagination) in your reasoning, stop calling tools. Do not
+     attempt to format a final JSON object yourself — the structured result is
+     extracted from your conversation automatically once you stop requesting tools.
 """

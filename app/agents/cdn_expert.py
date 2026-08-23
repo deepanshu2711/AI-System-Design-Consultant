@@ -1,14 +1,30 @@
-# agents/cdn_expert.py
-from langchain_core.messages import HumanMessage, SystemMessage
+from langchain_core.output_parsers import PydanticOutputParser
+from langchain_core.prompts import ChatPromptTemplate
 from langgraph.types import Command
+
 from app.prompts.cdn_expert.v1 import CDN_EXPERT_SYSTEM_PROMPT
 from app.schema.cdn import CdnDesign
 from app.state.desgin_state import DesignState
 from app.utils.error_handling import catch_agent_errors
-from app.utils.llm_factory import llm
+from app.utils.llm_factory import build_llm
 from app.utils.timing import timed_node
 
-llm_structured = llm.with_structured_output(CdnDesign)
+
+format_instructions = PydanticOutputParser(
+    pydantic_object=CdnDesign).get_format_instructions()
+llm_structured = build_llm(num_ctx=12288, num_predict=4608, timeout=360)
+llm_with_structure = llm_structured.with_structured_output(CdnDesign)
+
+
+prompt = ChatPromptTemplate.from_messages([
+    ("system", CDN_EXPERT_SYSTEM_PROMPT),
+    ("human",
+     "Clarified requirements:\n{clarified_requirements}\n\n"
+     "Database design:\n{database_design}\n\n"
+     "Design the CDN layer.\n\n"
+     "Your answer will be captured as structured output matching this schema, "
+     "so make sure it covers every one of these fields:\n\n{format_instructions}"),
+]).partial(format_instructions=format_instructions)
 
 
 @timed_node("cdn_expert_agent")
@@ -17,14 +33,12 @@ async def cdn_expert_agent(state: DesignState):
     clarified_requirements = state.get('clarified_requirements')
     database_design = state.get('database_design')
 
-    messages = [
-        SystemMessage(content=CDN_EXPERT_SYSTEM_PROMPT),
-        HumanMessage(content=(
-            f"Clarified requirements:\n{clarified_requirements}\n\n"
-            f"Database design:\n{database_design}\n\n"
-            "Design the CDN layer."
-        )),
-    ]
-    result = await llm_structured.ainvoke(messages)
+    messages = prompt.format_messages(
+        clarified_requirements=clarified_requirements,
+        database_design=database_design
+        or 'Not available — reason generically about likely media content.',
+    )
+
+    result = await llm_with_structure.ainvoke(messages)
 
     return Command(goto="supervisor", update={"cdn_design": result})

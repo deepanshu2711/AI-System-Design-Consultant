@@ -8,3 +8,9 @@ def _reject_blank_or_placeholder(value: str) -> str:
             "state the actual value instead"
         )
     return value
+
+
+def _reject_blank_or_placeholder_items(values: list[str]) -> list[str]:
+    for value in values:
+        _reject_blank_or_placeholder(value)
+    return values
