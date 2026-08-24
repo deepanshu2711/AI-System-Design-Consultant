@@ -62,7 +62,7 @@ Looking for a way to help out? Issues tagged [`good first issue`](../../issues?q
 ollama pull qwen2.5:3b
 ```
 
-The model is currently hardcoded in `app/utils/llm_factory.py` (no env var override yet).
+The model defaults to `qwen2.5:3b` but can be overridden by setting the `OLLAMA_MODEL` environment variable (see `.env.example`):
 
 ## Setup
 

@@ -1,7 +1,9 @@
+import os
+
 from langchain_ollama import ChatOllama
 
 _DEFAULTS = dict(
-    model="qwen2.5:3b",
+    model=os.environ.get("OLLAMA_MODEL", "qwen2.5:3b"),
     temperature=0,
     repeat_penalty=1.3,
     repeat_last_n=256,
