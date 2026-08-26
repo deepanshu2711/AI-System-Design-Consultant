@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Link from "next/link";
 import {
   ChatsCircle,
   ListChecks,
@@ -15,12 +14,14 @@ import {
   HardDrives,
   TreeStructure,
   Play,
-  ArrowRight,
   HandWaving,
   Plugs,
   WarningCircle,
 } from "@phosphor-icons/react/dist/ssr";
+import { useRouter } from "next/navigation";
 import AppNav from "@/components/AppNav";
+import { startDesign } from "@/lib/api";
+import { saveRunSession } from "@/lib/session";
 
 const GHOSTS = [
   "Design a system like Instagram — feed, uploads, follows",
@@ -51,12 +52,11 @@ const CHAIN = [
 ];
 
 export default function PromptScreen() {
+  const router = useRouter();
   const [value, setValue] = useState("");
   const [ghost, setGhost] = useState("");
   const [running, setRunning] = useState(false);
-  const [started, setStarted] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-  const startTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   useEffect(() => {
     let gi = 0;
@@ -82,14 +82,19 @@ export default function PromptScreen() {
   const start = () => {
     if (!value.trim() || running) return;
     setRunning(true);
-    setStarted(false);
-    startTimerRef.current = setTimeout(() => {
-      setRunning(false);
-      setStarted(true);
-    }, 1600);
+    const threadId = crypto.randomUUID();
+    const userQuery = value.trim();
+    saveRunSession({ threadId, userQuery });
+    // Fired but not awaited: navigating to /run right away is what lets the
+    // user watch the run's real progress live via its SSE stream, instead of
+    // staring at a static button for however long the first stage takes.
+    // /run itself handles routing on to /clarify if the run pauses for
+    // another round of questions, or showing the error if it fails.
+    startDesign(userQuery, threadId).catch((err) => {
+      console.error("design run failed to start", err);
+    });
+    router.push("/run");
   };
-
-  useEffect(() => () => clearTimeout(startTimerRef.current), []);
 
   const wordCount = value.trim() ? value.trim().split(/\s+/).length + " words" : "";
 
@@ -158,7 +163,6 @@ export default function PromptScreen() {
               value={value}
               onChange={(e) => {
                 setValue(e.target.value);
-                setStarted(false);
               }}
               onKeyDown={(e) => {
                 if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
@@ -209,7 +213,6 @@ export default function PromptScreen() {
               className="ex rounded-md border border-neutral-800 px-2.5 py-1.5 text-[12.5px] text-neutral-300"
               onClick={() => {
                 setValue("Design " + label.replace(/^A /, "a ").replace(/^An /, "an "));
-                setStarted(false);
               }}
             >
               {label}
@@ -217,20 +220,6 @@ export default function PromptScreen() {
           ))}
         </div>
 
-        {started && (
-          <div
-            className="mt-7.5 flex items-center gap-3 rounded-lg border border-accent-800 px-4.5 py-3"
-            style={{ background: "color-mix(in srgb, var(--color-accent-900) 58%, transparent)", animation: "ringIn .5s cubic-bezier(.16,.84,.3,1) both" }}
-          >
-            <ChatsCircle size={17} className="text-accent" />
-            <span className="text-[13.5px] text-neutral-200">Run started — Clarifying Questions has 4 questions for you.</span>
-            <Link href="/clarify" className="btn btn-primary flex items-center gap-2">
-              Answer them
-              <ArrowRight size={14} />
-            </Link>
-            <span className="font-mono text-[11px] text-neutral-500">thread a1f9…c72</span>
-          </div>
-        )}
       </div>
 
       <div className="tickwrap relative z-10 overflow-hidden border-t border-neutral-800" style={{ background: "color-mix(in srgb, var(--color-surface) 34%, transparent)" }}>

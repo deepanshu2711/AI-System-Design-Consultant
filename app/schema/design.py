@@ -3,6 +3,7 @@ from pydantic import BaseModel
 
 class StartDesignRequest(BaseModel):
     user_query: str
+    thread_id: str | None = None
 
 
 class ResumeDesignRequest(BaseModel):
