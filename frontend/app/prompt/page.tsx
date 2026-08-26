@@ -141,10 +141,6 @@ export default function PromptScreen() {
       </div>
 
       <div className="relative z-10 flex flex-1 flex-col items-center justify-center px-10 py-14">
-        <p className="fi mb-3.5 flex items-center gap-2.5 font-mono text-[11.5px] uppercase tracking-wide text-accent">
-          <span className="h-px w-6.5 bg-accent" />
-          New design run
-        </p>
         <h1 className="rv mb-3 text-center text-[46px] font-medium leading-[54px] tracking-[-0.02em]" style={{ "--d": ".06s" } as React.CSSProperties}>
           What are we designing?
         </h1>

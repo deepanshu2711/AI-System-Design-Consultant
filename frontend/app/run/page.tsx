@@ -53,6 +53,7 @@ export default function RunScreen() {
   const [userQuery, setUserQuery] = useState("");
   const [doneNodes, setDoneNodes] = useState<Set<string>>(new Set());
   const [activeNode, setActiveNode] = useState<string | null>(null);
+  const nodeStartedAtRef = useRef<Map<string, number>>(new Map());
   const [status, setStatus] = useState<RunStatus>("connecting");
   const [errorMessage, setErrorMessage] = useState("");
   const [log, setLog] = useState<LogLine[]>([]);
@@ -82,6 +83,7 @@ export default function RunScreen() {
       onNodeStart: (node) => {
         setStatus("running");
         setActiveNode(node);
+        nodeStartedAtRef.current.set(node, Date.now());
         pushLog(`supervisor → ${node}`);
       },
       onNodeEnd: (node) => {
@@ -152,6 +154,14 @@ useEffect(() => {
 
   const doneCount = doneNodes.size;
   const done = status === "complete";
+  // Recomputed on every `elapsed` tick (re-render) so it counts up live;
+  // plain seconds since the node started, not clock()'d — a run only ever
+  // shows one active node at a time, and node durations run well under a
+  // minute, so a "00:" minutes prefix (elapsed % 60) was always zero and
+  // never actually meant anything.
+  const activeSeconds = activeNode
+    ? Math.floor((Date.now() - (nodeStartedAtRef.current.get(activeNode) ?? Date.now())) / 1000)
+    : 0;
   const activeTitle = useMemo(
     () => (activeNode ? NODES.find((n) => n.nodes.includes(activeNode))?.title ?? activeNode : undefined),
     [activeNode]
@@ -276,7 +286,7 @@ useEffect(() => {
                         {n.title}
                       </span>
                       <span className="block font-mono text-[9.5px] leading-[14px]" style={{ color: isActive ? "var(--color-accent-300)" : "var(--color-neutral-600)" }}>
-                        {isDone ? "done" : isActive ? `working · ${clock(elapsed % 60)}` : "queued"}
+                        {isDone ? "done" : isActive ? `working · ${activeSeconds}s` : "queued"}
                       </span>
                     </span>
                   </div>
