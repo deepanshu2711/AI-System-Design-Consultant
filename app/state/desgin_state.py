@@ -11,6 +11,7 @@ from app.schema.error import AgentError
 from app.schema.microservice import MicroserviceDesign
 from app.schema.queue import QueueDesign
 from app.schema.requirements import RequirementSpec
+from app.schema.review import ReviewFeedback
 from app.schema.storage import StorageDesign
 from app.schema.traffic import TrafficEstimate
 
@@ -33,5 +34,8 @@ class DesignState(TypedDict):
     storage_design:  StorageDesign | None
 
     microservice_design: MicroserviceDesign | None
+
+    review_feedback: ReviewFeedback | None
+    review_iterations: int
 
     errors: Annotated[list[AgentError], add] | None

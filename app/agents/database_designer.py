@@ -11,6 +11,7 @@ from app.state.desgin_state import DesignState
 from app.tools.calculator import calculator
 from app.utils.error_handling import catch_agent_errors
 from app.utils.llm_factory import llm, build_llm
+from app.utils.review_feedback import revision_notice
 from app.utils.timing import timed_node
 from app.utils.constants import MAX_TOOL_ITERATIONS
 
@@ -53,6 +54,9 @@ async def database_designer_agent(state: DesignState):
         traffic_estimates=traffic_estimates
         or 'Not available — estimate row growth conservatively from requirements alone.',
     )
+
+    if notice := revision_notice(state, "database_designer_agent"):
+        messages.append(notice)
 
     response = await llm_with_tool.ainvoke(messages)
     messages.append(response)

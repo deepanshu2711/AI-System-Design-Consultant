@@ -2,13 +2,13 @@ from langgraph.graph import END
 
 from app.state.desgin_state import DesignState
 from langgraph.types import Command
+from app.utils.constants import MAX_AGENT_FAILURES, MAX_REVIEW_ITERATIONS
 from app.utils.timing import timed_node
-
-MAX_AGENT_FAILURES = 3
 
 
 def _route_if_healthy(state: DesignState, node_name: str):
-    failures = sum(1 for error in (state.get("errors") or []) if error.node == node_name)
+    failures = sum(1 for error in (state.get("errors") or [])
+                   if error.node == node_name)
     if failures >= MAX_AGENT_FAILURES:
         return Command(goto=END, update={"run_status": "failed"})
     return Command(goto=node_name)
@@ -43,5 +43,13 @@ async def supervisor(state: DesignState):
 
     if not state['microservice_design']:
         return _route_if_healthy(state, "microservice_expert_agent")
+
+    review_feedback = state.get('review_feedback')
+    review_iterations = state.get('review_iterations', 0)
+    review_settled = review_feedback is not None and (
+        review_feedback.approved or review_iterations >= MAX_REVIEW_ITERATIONS
+    )
+    if not review_settled:
+        return _route_if_healthy(state, "architecture_review_cycle")
 
     return Command(goto=END)

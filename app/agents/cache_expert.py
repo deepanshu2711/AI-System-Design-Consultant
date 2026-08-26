@@ -12,6 +12,7 @@ from app.tools.calculator import calculator
 from app.utils.constants import MAX_TOOL_ITERATIONS
 from app.utils.error_handling import catch_agent_errors
 from app.utils.llm_factory import llm, build_llm
+from app.utils.review_feedback import revision_notice
 from app.utils.timing import timed_node
 
 
@@ -55,6 +56,9 @@ async def cache_expert_agent(state: DesignState):
         database_design=database_design
         or 'Not available — reason generically about likely entities.',
     )
+
+    if notice := revision_notice(state, "cache_expert_agent"):
+        messages.append(notice)
 
     response = await llm_with_tools.ainvoke(messages)
     messages.append(response)

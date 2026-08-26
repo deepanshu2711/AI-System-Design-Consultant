@@ -47,6 +47,8 @@ async def start_design():
             "storage_design": None,
             "api_design": None,
             "microservice_design": None,
+            "review_feedback": None,
+            "review_iterations": 0,
             "errors": None
         }, config={
             "configurable": {"thread_id": thread_id}

@@ -10,6 +10,7 @@ from app.agents.microservice_expert import microservice_expert_agent
 from app.agents.queue_expert import queue_expert_agent
 from app.agents.storage_expert import storage_expert_agent
 from app.agents.supervisor import supervisor
+from app.graphs.review_subgraph import review_subgraph
 from app.agents.clarifying_questions import clarifying_questions_agent
 from app.agents.requirement_analyzer import requirement_analyzer_agent
 from app.agents.traffic_estimator import traffic_estimator_agent
@@ -44,6 +45,8 @@ def build_supervisor_graph():
         'storage_expert_agent', storage_expert_agent, retry_policy=default_retry_policy())
     supervisor_graph.add_node(
         'microservice_expert_agent', microservice_expert_agent, retry_policy=default_retry_policy())
+    supervisor_graph.add_node(
+        'architecture_review_cycle', review_subgraph)
 
     # NOTE: EDGES
     supervisor_graph.add_edge(START, "supervisor")
