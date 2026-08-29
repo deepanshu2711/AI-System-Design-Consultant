@@ -19,7 +19,8 @@ from app.utils.timing import timed_node
 format_instructions = PydanticOutputParser(
     pydantic_object=QueueDesign).get_format_instructions()
 llm_with_tools = llm.bind_tools([calculator])
-llm_structured = build_llm(num_ctx=12288, num_predict=4608, timeout=360)
+llm_structured = build_llm(
+    num_ctx=16384, num_predict=6144, timeout=360, repeat_penalty=1.4)
 llm_with_structure = llm_structured.with_structured_output(QueueDesign)
 
 

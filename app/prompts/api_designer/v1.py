@@ -38,6 +38,9 @@ DECISION RULES:
      realistic failure status code (400/401/403/404/409/429) per endpoint — the single
      most likely failure, not every plausible one — with a one-line description of
      when it occurs.
+   - Every response except 204 (No Content) MUST have a non-empty `example_body` —
+     even error responses need a minimal JSON body, e.g. {{"error": "message"}}.
+     Never leave `example_body` blank for a 2xx/4xx/5xx response.
 
 4. Auth:
    - Mark requires_auth accurately per endpoint — public read endpoints (e.g. 
@@ -70,8 +73,12 @@ DECISION RULES:
    - `description` fields (endpoint and response) are one short sentence each.
    - `versioning_strategy`, `auth_strategy`, `pagination_strategy`, and
      `error_format` are each one sentence stating the choice, not the rationale.
-   - If you notice yourself repeating an endpoint, JSON example, or sentence you've
-     already written, stop immediately and move on instead of looping.
+   - Every field is hard-capped at a few hundred characters and must be a direct
+     one-or-two-sentence answer (roughly under 40 words) — not a paragraph.
+   - If you notice yourself repeating an endpoint, JSON example, or sentence
+     you've already written, or a field's text drifting into unrelated words or
+     ideas instead of describing the design, stop immediately and write a short
+     direct answer instead of continuing.
 
 9. Tool use:
    - You'll be told your exact json_formatter call budget in the user message —

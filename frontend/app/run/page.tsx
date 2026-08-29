@@ -342,7 +342,7 @@ useEffect(() => {
               <CheckCircle size={16} className="text-accent" />
               All {TOTAL_NODES} stages filled — document assembled.
             </p>
-            <Link href="/document" className="btn btn-primary btn-block flex items-center justify-center gap-2">
+            <Link href={`/document?thread=${threadId}`} className="btn btn-primary btn-block flex items-center justify-center gap-2">
               <FileText size={14} />
               Open design document
             </Link>

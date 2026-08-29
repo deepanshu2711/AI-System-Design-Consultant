@@ -41,6 +41,10 @@ def subscribe(thread_id: str) -> asyncio.Queue:
     return _get_or_create(thread_id)
 
 
+def get_last_terminal(thread_id: str) -> dict | None:
+    return _LAST_TERMINAL.get(thread_id)
+
+
 def close(thread_id: str) -> None:
     queue = _CHANNELS.pop(thread_id, None)
     if queue is not None:

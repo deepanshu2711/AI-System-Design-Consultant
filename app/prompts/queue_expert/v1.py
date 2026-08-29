@@ -86,6 +86,13 @@ DECISION RULES:
 11. Brevity:
     - Keep the top-level `reasoning` field concise — a few sentences on broker
       choice and topology is enough. Do not restate the full list of topics.
+    - Every field (producer, consumer, message_schema, retry_policy,
+      dead_letter_strategy, per-topic reasoning, backpressure_strategy,
+      scaling_strategy, etc.) is hard-capped at a few hundred characters and
+      must be a direct one-or-two-sentence answer (roughly under 40 words) —
+      not a paragraph.
     - If you notice yourself repeating a topic, retry policy, or sentence
-      you've already written, stop immediately and move on instead of looping.
+      you've already written, or a field's text drifting into unrelated
+      words or ideas instead of describing the design, stop immediately and
+      write a short direct answer instead of continuing.
 """

@@ -79,6 +79,8 @@ DECISION RULES:
    - Keep the top-level `reasoning` field concise — a few sentences per major
      decision (database type, partitioning) is enough. Do not restate the full
      schema or repeat points you've already made.
+   - Every field is hard-capped at a few hundred characters and must be a
+     direct one-or-two-sentence answer — not a paragraph.
    - If you notice yourself repeating a sentence, phrase, or table description
      you've already written, stop immediately and move on to the next part of
      the design instead of looping.

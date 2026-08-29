@@ -20,7 +20,8 @@ MAX_TOOL_ITERATIONS = 6
 format_instructions = PydanticOutputParser(
     pydantic_object=ApiDesign).get_format_instructions()
 llm_with_tools = llm.bind_tools([json_formatter])
-llm_structured = build_llm(num_ctx=16384, num_predict=6144, timeout=360)
+llm_structured = build_llm(
+    num_ctx=16384, num_predict=6144, timeout=360, repeat_penalty=1.4)
 llm_with_structure = llm_structured.with_structured_output(ApiDesign)
 
 

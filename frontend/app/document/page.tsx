@@ -1,29 +1,383 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { CompassTool, FileMd, FilePdf, Info } from "@phosphor-icons/react/dist/ssr";
+import { useSearchParams } from "next/navigation";
+import { CompassTool, FileMd, FilePdf, Info, WarningCircle, CircleNotch } from "@phosphor-icons/react/dist/ssr";
+import {
+  getDesignState,
+  isWaitingForInput,
+  type ApiEndpoint,
+  type CachedItem,
+  type DesignState,
+  type QueueTopic,
+  type RunComplete,
+  type Table as TableArtifact,
+} from "@/lib/api";
 
-const TOC: [string, string][] = [
-  ["01", "Requirements"],
-  ["02", "Traffic"],
-  ["03", "Capacity"],
-  ["04", "Database"],
-  ["05", "Cache"],
-  ["06", "Queues"],
-  ["07", "API"],
-  ["08", "CDN & storage"],
-  ["09", "Services"],
-];
+type Section = { title: string; schema: string; node: React.ReactNode };
 
-export default function DocumentScreen() {
+const MAX_SECTIONS = 10;
+
+function truncate(s: string, n: number) {
+  return s.length > n ? s.slice(0, n) + "…" : s;
+}
+
+export default function DocumentPage() {
+  return (
+    <Suspense fallback={<CenteredMessage text="Loading design document…" />}>
+      <DocumentScreen />
+    </Suspense>
+  );
+}
+
+function DocumentScreen() {
+  const searchParams = useSearchParams();
+  const threadId = searchParams.get("thread");
+
+  const [phase, setPhase] = useState<"loading" | "error" | "ready">("loading");
+  const [errorMessage, setErrorMessage] = useState("");
+  const [res, setRes] = useState<RunComplete | null>(null);
+
+  useEffect(() => {
+    if (!threadId) {
+      setPhase("error");
+      setErrorMessage("No run selected — start a new design to generate a document.");
+      return;
+    }
+    let cancelled = false;
+    getDesignState(threadId)
+      .then((data) => {
+        if (cancelled) return;
+        if (isWaitingForInput(data)) {
+          setErrorMessage("This run is still waiting on clarifying answers — it hasn't finished yet.");
+          setPhase("error");
+          return;
+        }
+        setRes(data);
+        setPhase("ready");
+      })
+      .catch((err: Error) => {
+        if (cancelled) return;
+        setErrorMessage(err.message.startsWith("404") ? "No finished run found for this thread." : err.message);
+        setPhase("error");
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [threadId]);
+
+  if (phase === "loading") return <CenteredMessage text="Loading design document…" icon="spin" />;
+  if (phase === "error" || !res) return <CenteredMessage text={errorMessage} icon="warn" />;
+
+  return <Document res={res} />;
+}
+
+function CenteredMessage({ text, icon }: { text: string; icon?: "spin" | "warn" }) {
+  return (
+    <div className="grid h-screen place-items-center bg-bg px-6">
+      <div className="flex max-w-[46ch] flex-col items-center gap-3 text-center">
+        <span className="flex items-center gap-2 text-[14.5px] font-medium">
+          <CompassTool weight="fill" size={17} className="text-accent" />
+          Consultant
+        </span>
+        {icon === "spin" && <CircleNotch size={20} className="animate-spin text-accent" />}
+        {icon === "warn" && <WarningCircle size={20} style={{ color: "#e08a83" }} />}
+        <p className="m-0 text-[14px] leading-[23px] text-neutral-400">{text}</p>
+        <Link href="/prompt" className="btn btn-secondary mt-2">
+          Start a new design
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+function Document({ res }: { res: RunComplete }) {
+  const state = (res.state ?? {}) as DesignState;
   const [active, setActive] = useState(0);
   const [pct, setPct] = useState(0);
-  const [exported, setExported] = useState(false);
-  const exportTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   const docRef = useRef<HTMLDivElement>(null);
   const sectionRefs = useRef<(HTMLDivElement | null)[]>([]);
+
+  const req = state.clarified_requirements;
+  const assumptionCount = req?.explicit_assumptions.length ?? 0;
+
+  const sections: Section[] = [];
+
+  if (req) {
+    sections.push({
+      title: "Requirements",
+      schema: "RequirementSpec",
+      node: (
+        <>
+          <div className="grid grid-cols-1 gap-6.5 md:grid-cols-2">
+            <div>
+              <p className="mb-2.5 font-mono text-[10.5px] uppercase tracking-wide text-neutral-500">Functional</p>
+              <BulletList items={req.functional_requirements} />
+            </div>
+            <div>
+              <p className="mb-2.5 font-mono text-[10.5px] uppercase tracking-wide text-neutral-500">Non-functional</p>
+              <BulletList items={req.non_functional_requirements} />
+            </div>
+          </div>
+          <p className="mt-4 text-[13px] leading-[22px] text-neutral-500">
+            Assumed scale: <span className="text-neutral-300">{req.assumed_scale}</span>
+            {req.involves_media_content && <span className="ml-2 tag tag-outline text-[10px]">involves media content</span>}
+          </p>
+          {req.explicit_assumptions.map((a, i) => (
+            <Assumption key={i} n={i + 1} total={assumptionCount}>
+              {a}
+            </Assumption>
+          ))}
+        </>
+      ),
+    });
+  }
+
+  if (state.traffic_estimates) {
+    const t = state.traffic_estimates;
+    sections.push({
+      title: "Traffic",
+      schema: "TrafficEstimate",
+      node: (
+        <>
+          <div className="mb-4 grid grid-cols-2 gap-4.5 sm:grid-cols-5">
+            <Stat label="DAU" value={t.dau.toLocaleString()} />
+            <Stat label="MAU" value={t.mau.toLocaleString()} />
+            <Stat label="Avg RPS" value={t.avg_rps.toLocaleString()} />
+            <Stat label="Peak RPS" value={t.peak_rps.toLocaleString()} />
+            <Stat label="Read : write" value={t.read_write_ratio} />
+          </div>
+          <p className="m-0 max-w-[74ch] text-[14px] leading-[25px] text-neutral-300">
+            Average request {t.avg_request_size_kb} KB, average response {t.avg_response_size_kb} KB. {t.reasoning}
+          </p>
+        </>
+      ),
+    });
+  }
+
+  if (state.capacity_plan) {
+    const c = state.capacity_plan;
+    sections.push({
+      title: "Capacity",
+      schema: "CapacityPlan",
+      node: (
+        <>
+          <div className="mb-4 grid grid-cols-2 gap-4.5 sm:grid-cols-4">
+            <Stat label="Storage / day" value={`${c.storage_per_day_gb} GB`} />
+            <Stat label="Storage / year" value={`${c.storage_per_year_tb} TB`} />
+            <Stat label="Bandwidth peak" value={`${c.bandwidth_peak_mbps} Mb/s`} />
+            <Stat label="Compute nodes" value={String(c.estimated_compute_nodes)} />
+          </div>
+          <p className="m-0 max-w-[74ch] text-[14px] leading-[25px] text-neutral-300">
+            Replication factor {c.replication_factor}, average bandwidth {c.bandwidth_avg_mbps} Mb/s. {c.reasoning}
+          </p>
+          <ConfidenceTag confidence={c.confidence} />
+        </>
+      ),
+    });
+  }
+
+  if (state.database_design) {
+    const d = state.database_design;
+    sections.push({
+      title: "Database",
+      schema: "DatabaseDesign",
+      node: (
+        <>
+          <p className="mb-4 max-w-[74ch] text-[14px] leading-[25px] text-neutral-300">
+            <span className="font-mono text-accent-300">{d.database_type}</span> · {d.reasoning} Partitioning: {d.partitioning_strategy}
+          </p>
+          {d.tables.map((table) => (
+            <DatabaseTableBlock key={table.name} table={table} />
+          ))}
+          {d.relationships.length > 0 && (
+            <>
+              <p className="mb-2 mt-5 font-mono text-[10.5px] uppercase tracking-wide text-neutral-500">Relationships</p>
+              <BulletList
+                items={d.relationships.map((r) => `${r.from_table} → ${r.to_table} (${r.relationship_type}) — ${r.description}`)}
+              />
+            </>
+          )}
+          {d.sample_queries.length > 0 && (
+            <>
+              <p className="mb-2 mt-5 font-mono text-[10.5px] uppercase tracking-wide text-neutral-500">Sample queries</p>
+              <div className="flex flex-col gap-1.5">
+                {d.sample_queries.map((q, i) => (
+                  <code key={i} className="block rounded-md bg-neutral-900 px-3 py-2 font-mono text-[12px] text-neutral-300">
+                    {q}
+                  </code>
+                ))}
+              </div>
+            </>
+          )}
+          <ConfidenceTag confidence={d.confidence} />
+        </>
+      ),
+    });
+  }
+
+  if (state.cache_design) {
+    const c = state.cache_design;
+    sections.push({
+      title: "Cache",
+      schema: "CacheDesign",
+      node: (
+        <>
+          <p className="mb-4 max-w-[74ch] text-[14px] leading-[25px] text-neutral-300">
+            <span className="font-mono text-accent-300">
+              {c.cache_type} · {c.cache_engine}
+            </span>{" "}
+            — {c.reasoning} Target hit ratio {c.cache_hit_ratio_target}, {c.consistency_model} consistency,{" "}
+            {c.cache_aside_vs_write_through}.
+          </p>
+          <Table
+            head={["Key pattern", "TTL", "Eviction", "Invalidated by"]}
+            rows={c.cached_items.map((it: CachedItem) => [it.cache_key_pattern, `${it.ttl_seconds}s`, it.eviction_policy, it.invalidation_strategy])}
+          />
+          {c.hot_key_risk_notes && <p className="mt-4 text-[13px] leading-[22px] text-neutral-500">Hot-key risk: {c.hot_key_risk_notes}</p>}
+          <ConfidenceTag confidence={c.confidence} />
+        </>
+      ),
+    });
+  }
+
+  if (state.queue_expert) {
+    const q = state.queue_expert;
+    sections.push({
+      title: "Queues",
+      schema: "QueueDesign",
+      node: (
+        <>
+          <p className="mb-4 max-w-[74ch] text-[14px] leading-[25px] text-neutral-300">
+            <span className="font-mono text-accent-300">
+              {q.broker_type} · {q.broker_engine}
+            </span>{" "}
+            — {q.reasoning} Backpressure: {q.backpressure_strategy}. Scaling: {q.scaling_strategy}.
+          </p>
+          <Table
+            head={["Topic", "Producer", "Consumer", "Delivery", "Ordering"]}
+            rows={q.topics.map((t: QueueTopic) => [t.name, t.producer, t.consumer, t.delivery_guarantee, t.ordering_requirement])}
+          />
+          <ConfidenceTag confidence={q.confidence} />
+        </>
+      ),
+    });
+  }
+
+  if (state.api_design) {
+    const a = state.api_design;
+    sections.push({
+      title: "API",
+      schema: "ApiDesign",
+      node: (
+        <>
+          <p className="mb-4 max-w-[74ch] text-[14px] leading-[25px] text-neutral-300">
+            <span className="font-mono text-accent-300">{a.api_style}</span> under{" "}
+            <code className="font-mono text-[13px] text-accent-300">{a.base_path}</code>, {a.auth_strategy}, {a.pagination_strategy}. {a.reasoning}
+          </p>
+          <Table
+            head={["Method", "Path", "Purpose", "Auth"]}
+            accentFirstCol
+            rows={a.endpoints.map((e: ApiEndpoint) => [e.method, e.path, e.description, e.requires_auth ? "required" : "public"])}
+          />
+          <ConfidenceTag confidence={a.confidence} />
+        </>
+      ),
+    });
+  }
+
+  if (state.cdn_design || state.storage_design) {
+    sections.push({
+      title: "CDN & storage",
+      schema: [state.cdn_design && "CdnDesign", state.storage_design && "StorageDesign"].filter(Boolean).join(" · "),
+      node: (
+        <div className="grid grid-cols-1 gap-6.5 md:grid-cols-2">
+          {state.cdn_design && (
+            <div>
+              <p className="mb-2.5 font-mono text-[10.5px] uppercase tracking-wide text-neutral-500">Edge</p>
+              <p className="m-0 text-[14px] leading-[25px] text-neutral-200">
+                {state.cdn_design.needed
+                  ? `${state.cdn_design.cdn_provider} — ${state.cdn_design.reasoning} ${state.cdn_design.edge_locations_strategy}`
+                  : `Not needed. ${state.cdn_design.reasoning}`}
+              </p>
+              {state.cdn_design.needed && state.cdn_design.cached_content_types.length > 0 && (
+                <p className="mt-2 font-mono text-[11.5px] text-neutral-500">
+                  Caches: {state.cdn_design.cached_content_types.join(", ")}
+                </p>
+              )}
+            </div>
+          )}
+          {state.storage_design && (
+            <div>
+              <p className="mb-2.5 font-mono text-[10.5px] uppercase tracking-wide text-neutral-500">Object storage</p>
+              <p className="m-0 text-[14px] leading-[25px] text-neutral-200">
+                {state.storage_design.needed
+                  ? `${state.storage_design.storage_provider} — ${state.storage_design.reasoning}`
+                  : `Not needed. ${state.storage_design.reasoning}`}
+              </p>
+              {state.storage_design.needed && state.storage_design.buckets.length > 0 && (
+                <Table
+                  head={["Bucket", "Content", "Class", "Lifecycle"]}
+                  rows={state.storage_design.buckets.map((b) => [b.name, b.content_type, b.storage_class, b.lifecycle_policy])}
+                />
+              )}
+            </div>
+          )}
+        </div>
+      ),
+    });
+  }
+
+  if (state.microservice_design) {
+    const m = state.microservice_design;
+    sections.push({
+      title: "Services",
+      schema: "MicroserviceDesign",
+      node: (
+        <>
+          <p className="mb-4 max-w-[74ch] text-[14px] leading-[25px] text-neutral-300">{m.decomposition_rationale}</p>
+          <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+            {m.services.map((s) => (
+              <ServiceCard key={s.name} title={s.name} meta={s.responsibility} />
+            ))}
+          </div>
+          {m.communications.length > 0 && (
+            <>
+              <p className="mb-2 mt-5 font-mono text-[10.5px] uppercase tracking-wide text-neutral-500">Communication</p>
+              <BulletList
+                items={m.communications.map((c) => `${c.from_service} → ${c.to_service} (${c.pattern}) — ${c.reason}`)}
+              />
+            </>
+          )}
+          {m.shared_concerns && <p className="mt-4 text-[13px] leading-[22px] text-neutral-500">Shared concerns: {m.shared_concerns}</p>}
+        </>
+      ),
+    });
+  }
+
+  if (state.review_feedback) {
+    const r = state.review_feedback;
+    sections.push({
+      title: "Review",
+      schema: "ReviewFeedback",
+      node: (
+        <>
+          <p className="mb-3 flex items-center gap-2 text-[14px] leading-[25px] text-neutral-300">
+            <span className={`tag ${r.approved ? "tag-accent" : "tag-outline"} text-[10.5px]`}>{r.approved ? "approved" : "changes requested"}</span>
+            {r.summary}
+          </p>
+          {r.issues.map((issue, i) => (
+            <Callout key={i} tone={issue.severity === "blocker" ? "danger" : "warn"}>
+              <strong className="font-medium text-neutral-200">{issue.target}</strong> — {issue.description}
+              {issue.suggested_fix && <span className="block text-neutral-500">Suggested fix: {issue.suggested_fix}</span>}
+            </Callout>
+          ))}
+        </>
+      ),
+    });
+  }
 
   const onScroll = () => {
     const el = docRef.current;
@@ -37,17 +391,14 @@ export default function DocumentScreen() {
     if (nextActive !== active) setActive(nextActive);
   };
 
-  const exportMd = () => {
-    setExported(true);
-    clearTimeout(exportTimer.current);
-    exportTimer.current = setTimeout(() => setExported(false), 1800);
-  };
-
   const goTo = (i: number) => {
     const doc = docRef.current;
     const target = sectionRefs.current[i];
     if (doc && target) doc.scrollTo({ top: Math.max(0, target.offsetTop - 24), behavior: "smooth" });
   };
+
+  const statusLabel = res.status === "failed" || res.status === "error" ? "failed" : "complete";
+  const briefTitle = truncate(state.user_query ?? "Design", 64);
 
   return (
     <div className="grid h-screen grid-cols-1 bg-bg lg:grid-cols-[250px_minmax(0,1fr)]">
@@ -61,31 +412,31 @@ export default function DocumentScreen() {
         </span>
         <p className="mb-2.5 font-mono text-[10.5px] uppercase tracking-wide text-neutral-500">Contents</p>
         <div className="flex min-h-0 flex-1 flex-col gap-px overflow-hidden">
-          {TOC.map(([num, label], i) => {
+          {sections.map((s, i) => {
             const on = i === active;
             return (
               <div
-                key={num}
+                key={s.title}
                 className="toc flex items-center gap-2.5 rounded-md px-2.5 py-1.5"
                 style={{ background: on ? "color-mix(in srgb, var(--color-accent-900) 55%, transparent)" : "transparent" }}
                 onClick={() => goTo(i)}
               >
                 <span className="font-mono text-[10px]" style={{ color: on ? "var(--color-accent-300)" : "var(--color-neutral-600)" }}>
-                  {num}
+                  {String(i + 1).padStart(2, "0")}
                 </span>
                 <span className="flex-1 text-[12.5px]" style={{ color: on ? "var(--color-text)" : "var(--color-neutral-300)" }}>
-                  {label}
+                  {s.title}
                 </span>
               </div>
             );
           })}
         </div>
         <div className="flex flex-col gap-2 pt-3.5">
-          <button type="button" className="btn btn-primary btn-block flex items-center justify-center gap-2" onClick={exportMd}>
+          <button type="button" className="btn btn-primary btn-block flex items-center justify-center gap-2" disabled>
             <FileMd size={14} />
-            {exported ? "Copied to clipboard" : "Export Markdown"}
+            Export Markdown
           </button>
-          <button type="button" className="btn btn-ghost btn-block flex items-center justify-center gap-2">
+          <button type="button" className="btn btn-ghost btn-block flex items-center justify-center gap-2" disabled>
             <FilePdf size={14} />
             Export PDF
           </button>
@@ -95,184 +446,53 @@ export default function DocumentScreen() {
       <div className="flex min-h-0 flex-col overflow-hidden">
         <div className="flex items-center gap-3 border-b border-neutral-800 px-8.5 py-4">
           <span className="flex-1 text-[13px] text-neutral-500">
-            <Link href="/prompt">New design</Link> / <Link href="/run">Instagram-like feed</Link> / document
+            <Link href="/prompt">New design</Link> / document
           </span>
-          <span className="tag tag-outline text-[10.5px]">complete · 11 of 11</span>
-          <span className="font-mono text-[11.5px] text-neutral-600">04:38 · 6 tool calls</span>
+          <span className="tag tag-outline text-[10.5px]">
+            {statusLabel} · {sections.length} of {MAX_SECTIONS}
+          </span>
         </div>
 
         <div ref={docRef} onScroll={onScroll} className="doc min-h-0 flex-1 overflow-y-auto px-11 pb-15 pt-8.5">
           <p className="mb-3 font-mono text-[11px] uppercase tracking-wide text-accent">System design document</p>
-          <h1 className="mb-2.5 max-w-[26ch] text-[34px] font-medium leading-[44px] tracking-[-0.018em]">
-            A photo and short-video sharing platform
-          </h1>
-          <p className="mb-2 max-w-[70ch] text-[15px] leading-[27px] text-neutral-300">
-            Ranked feed, media uploads, follow graph and notifications, at 10M DAU across two regions. Generated from your
-            brief by eleven agents; every figure below came back typed and validated.
+          <h1 className="mb-2.5 max-w-[36ch] text-[30px] font-medium leading-[40px] tracking-[-0.018em]">{briefTitle}</h1>
+          <p className="mb-6.5 font-mono text-[11.5px] text-neutral-600">
+            thread {res.thread_id.slice(0, 4)}…{res.thread_id.slice(-3)} · qwen2.5:3b
+            {assumptionCount > 0 && ` · ${assumptionCount} recorded assumption${assumptionCount === 1 ? "" : "s"}`}
           </p>
-          <p className="mb-6.5 font-mono text-[11.5px] text-neutral-600">thread a1f9…c72 · qwen2.5:3b · 3 recorded assumptions</p>
 
-          <Section id={0} refs={sectionRefs} num="01" title="Requirements" schema="RequirementSpec">
-            <div className="grid grid-cols-1 gap-6.5 md:grid-cols-2">
-              <div>
-                <p className="mb-2.5 font-mono text-[10.5px] uppercase tracking-wide text-neutral-500">Functional</p>
-                <p className="m-0 text-[14px] leading-[25px] text-neutral-200">
-                  Upload photos and video up to 60s · ranked home feed · follow and unfollow · likes and comments ·
-                  notifications on engagement · profile with post grid · search by handle
-                </p>
-              </div>
-              <div>
-                <p className="mb-2.5 font-mono text-[10.5px] uppercase tracking-wide text-neutral-500">Non-functional</p>
-                <p className="m-0 text-[14px] leading-[25px] text-neutral-200">
-                  Feed p99 under 200ms · 99.95% availability · reads served from the nearest region · uploads durable
-                  before ack · eventual consistency on counters
-                </p>
-              </div>
+          {state.errors && state.errors.length > 0 && (
+            <div className="mb-6.5 flex flex-col gap-2">
+              {state.errors.map((e, i) => (
+                <Callout key={i} tone="warn">
+                  <strong className="font-medium text-neutral-200">{e.node}</strong> — {e.message} (attempt {e.attempt_count})
+                </Callout>
+              ))}
             </div>
-            <Assumption n={1}>direct messaging is out of scope; it was never stated in the brief.</Assumption>
-          </Section>
+          )}
 
-          <Section id={1} refs={sectionRefs} num="02" title="Traffic" schema="TrafficEstimate">
-            <div className="mb-4 grid grid-cols-2 gap-4.5 sm:grid-cols-5">
-              <Stat label="DAU" value="10M" />
-              <Stat label="MAU" value="42M" />
-              <Stat label="Avg RPS" value="29k" />
-              <Stat label="Peak RPS" value="86k" />
-              <Stat label="Read : write" value="100:1" />
-            </div>
-            <p className="m-0 max-w-[74ch] text-[14px] leading-[25px] text-neutral-300">
-              Average request 2.1 KB, average response 1.4 MB once media is inlined. Peak is 3× average, assumed to fall
-              in a two-hour evening window per region.
-            </p>
-          </Section>
+          {sections.length === 0 && (
+            <p className="text-[14px] leading-[25px] text-neutral-400">This run finished without producing any design artifacts.</p>
+          )}
 
-          <Section id={2} refs={sectionRefs} num="03" title="Capacity" schema="CapacityPlan">
-            <div className="mb-4 grid grid-cols-2 gap-4.5 sm:grid-cols-4">
-              <Stat label="Storage / day" value="14 TB" />
-              <Stat label="Storage / year" value="5.1 PB" />
-              <Stat label="Egress at peak" value="120 Gb/s" />
-              <Stat label="App nodes" value="240" />
-            </div>
-            <p className="m-0 max-w-[74ch] text-[14px] leading-[25px] text-neutral-300">
-              Replication factor 3 within each region, one asynchronous cross-region copy. Node count assumes 400 RPS per
-              app instance at 60% headroom.
-            </p>
-          </Section>
-
-          <Section id={3} refs={sectionRefs} num="04" title="Database" schema="DatabaseDesign">
-            <p className="mb-4 max-w-[74ch] text-[14px] leading-[25px] text-neutral-300">
-              PostgreSQL for the follow graph and metadata, Cassandra for timelines and high-write counters. Sharded by{" "}
-              <code className="font-mono text-[13px] text-accent-300">user_id</code> across 64 shards.
-            </p>
-            <Table
-              head={["Table", "Engine", "Partition key", "Indexes"]}
-              rows={[
-                ["users", "PostgreSQL", "user_id", "handle, email"],
-                ["follows", "PostgreSQL", "follower_id", "followee_id"],
-                ["posts", "PostgreSQL", "user_id, created_month", "created_at desc"],
-                ["media_assets", "PostgreSQL", "post_id", "status"],
-                ["timeline", "Cassandra", "user_id", "clustered by rank"],
-                ["likes", "Cassandra", "post_id", "—"],
-                ["comments", "PostgreSQL", "post_id", "created_at"],
-                ["notifications", "Cassandra", "user_id", "unread"],
-              ]}
-            />
-            <Assumption n={2}>fan-out on write under 10k followers, fan-out on read above it.</Assumption>
-          </Section>
-
-          <Section id={4} refs={sectionRefs} num="05" title="Cache" schema="CacheDesign">
-            <p className="mb-4 max-w-[74ch] text-[14px] leading-[25px] text-neutral-300">
-              Redis cluster per region, read-through with write-invalidate. Target hit ratio 92%; a hot-key guard shards
-              celebrity timelines across 8 replicas.
-            </p>
-            <Table
-              head={["Key pattern", "TTL", "Eviction", "Invalidated by"]}
-              rows={[
-                ["feed:{user}:{page}", "30s", "allkeys-lru", "new post fan-out"],
-                ["post:{id}", "10m", "allkeys-lru", "edit, delete"],
-                ["profile:{handle}", "5m", "allkeys-lru", "profile update"],
-                ["counts:{post}", "60s", "volatile-ttl", "periodic rollup"],
-              ]}
-            />
-          </Section>
-
-          <Section id={5} refs={sectionRefs} num="06" title="Queues" schema="QueueDesign">
-            <p className="mb-4 max-w-[74ch] text-[14px] leading-[25px] text-neutral-300">
-              Kafka, at-least-once with idempotent consumers. Three retries with exponential backoff, then a dead-letter
-              topic per subject.
-            </p>
-            <Table
-              head={["Topic", "Partitions", "Consumers", "Ordering"]}
-              rows={[
-                ["post.created", "64", "feed fan-out, search", "per user_id"],
-                ["media.uploaded", "32", "transcoder", "per post_id"],
-                ["engagement", "32", "notifier, analytics", "none required"],
-                ["counter.rollup", "16", "counts writer", "per post_id"],
-              ]}
-            />
-          </Section>
-
-          <Section id={6} refs={sectionRefs} num="07" title="API" schema="ApiDesign">
-            <p className="mb-4 max-w-[74ch] text-[14px] leading-[25px] text-neutral-300">
-              REST under <code className="font-mono text-[13px] text-accent-300">/v1</code>, bearer tokens, cursor
-              pagination. Eighteen endpoints; the six that carry the feed are below.
-            </p>
-            <Table
-              head={["Method", "Path", "Purpose", "Notes"]}
-              accentFirstCol
-              rows={[
-                ["GET", "/v1/feed", "Ranked home feed", "cursor, 20 per page"],
-                ["POST", "/v1/posts", "Create a post", "idempotency key"],
-                ["POST", "/v1/media/upload-url", "Signed upload URL", "15m expiry"],
-                ["PUT", "/v1/follows/{id}", "Follow a user", "idempotent"],
-                ["GET", "/v1/users/{handle}", "Profile and post grid", "cacheable 5m"],
-                ["GET", "/v1/notifications", "Unread notifications", "long poll 30s"],
-              ]}
-            />
-          </Section>
-
-          <Section id={7} refs={sectionRefs} num="08" title="CDN & storage" schema="CdnDesign · StorageDesign">
-            <div className="grid grid-cols-1 gap-6.5 md:grid-cols-2">
-              <div>
-                <p className="mb-2.5 font-mono text-[10.5px] uppercase tracking-wide text-neutral-500">Edge</p>
-                <p className="m-0 text-[14px] leading-[25px] text-neutral-200">
-                  Images and video segments cached 7 days at the edge, signed URLs with 15-minute expiry, cache key on
-                  asset id and rendition. Purge on delete; renditions are immutable, so edits mint a new id.
-                </p>
-              </div>
-              <div>
-                <p className="mb-2.5 font-mono text-[10.5px] uppercase tracking-wide text-neutral-500">Object storage</p>
-                <p className="m-0 text-[14px] leading-[25px] text-neutral-200">
-                  Three buckets — originals, renditions, thumbnails. Standard for 90 days, then infrequent access;
-                  originals to cold at one year. Versioning on originals only.
-                </p>
-              </div>
-            </div>
-          </Section>
-
-          <Section id={8} refs={sectionRefs} num="09" title="Services" schema="MicroserviceDesign">
-            <p className="mb-4 max-w-[74ch] text-[14px] leading-[25px] text-neutral-300">
-              Seven services behind a gateway. Reads are synchronous; every write that fans out goes through Kafka, so a
-              slow consumer never blocks a post.
-            </p>
-            <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
-              <ServiceCard title="Gateway" meta="auth, rate limits" />
-              <ServiceCard title="User" meta="profiles, follows" />
-              <ServiceCard title="Post" meta="writes, comments" />
-              <ServiceCard title="Feed" meta="ranking, fan-out" />
-              <ServiceCard title="Media" meta="upload, transcode" />
-              <ServiceCard title="Notify" meta="push, in-app" />
-              <ServiceCard title="Search" meta="handles, tags" />
-              <ServiceCard title="Assumption 3" meta="no ML ranking service" accent />
-            </div>
-            <p className="mt-5 text-[12.5px] leading-[21px] text-neutral-500">
-              End of document · generated by 11 agents in 04:38 · qwen2.5:3b
-            </p>
-          </Section>
+          {sections.map((s, i) => (
+            <SectionBlock
+              key={s.title}
+              id={i}
+              refs={sectionRefs}
+              num={String(i + 1).padStart(2, "0")}
+              title={s.title}
+              schema={s.schema}
+            >
+              {s.node}
+            </SectionBlock>
+          ))}
         </div>
 
         <div className="flex items-center gap-4 border-t border-neutral-800 px-8.5 py-3.5 font-mono text-[11.5px] text-neutral-600">
-          <span>9 sections · 13 typed artifacts</span>
+          <span>
+            {sections.length} section{sections.length === 1 ? "" : "s"}
+          </span>
           <span className="ml-auto flex items-center gap-3">
             <span className="text-neutral-500">{pct}% read</span>
             <span className="h-1 w-30 overflow-hidden rounded-full bg-neutral-800">
@@ -285,7 +505,7 @@ export default function DocumentScreen() {
   );
 }
 
-function Section({
+function SectionBlock({
   id,
   refs,
   num,
@@ -326,24 +546,47 @@ function Stat({ label, value }: { label: string; value: string }) {
   );
 }
 
-function Assumption({ n, children }: { n: number; children: React.ReactNode }) {
+function Assumption({ n, total, children }: { n: number; total: number; children: React.ReactNode }) {
   return (
     <p className="mt-4 flex items-start gap-1.5 text-[12.5px] leading-[21px] text-neutral-500">
       <Info size={13} className="mt-1 flex-none text-accent-300" />
-      Assumption {n} of 3 — {children}
+      Assumption {n} of {total} — {children}
     </p>
   );
 }
 
-function Table({
-  head,
-  rows,
-  accentFirstCol,
-}: {
-  head: string[];
-  rows: string[][];
-  accentFirstCol?: boolean;
-}) {
+function ConfidenceTag({ confidence }: { confidence: string }) {
+  return <span className="tag tag-outline mt-4 inline-block text-[10px]">confidence: {confidence}</span>;
+}
+
+function BulletList({ items }: { items: string[] }) {
+  if (items.length === 0) return <p className="m-0 text-[13px] text-neutral-600">—</p>;
+  return (
+    <ul className="m-0 flex list-none flex-col gap-1.5 p-0 text-[14px] leading-[24px] text-neutral-200">
+      {items.map((it, i) => (
+        <li key={i} className="flex gap-2">
+          <span className="text-neutral-600">·</span>
+          {it}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function Callout({ tone, children }: { tone: "warn" | "danger"; children: React.ReactNode }) {
+  const color = tone === "danger" ? "#e08a83" : "#e0c083";
+  return (
+    <p
+      className="mt-3 flex items-start gap-1.5 rounded-md px-3 py-2.5 text-[12.5px] leading-[21px] text-neutral-400"
+      style={{ background: `color-mix(in srgb, ${color} 12%, transparent)`, border: `1px solid color-mix(in srgb, ${color} 35%, transparent)` }}
+    >
+      <WarningCircle size={13} className="mt-0.5 flex-none" style={{ color }} />
+      <span>{children}</span>
+    </p>
+  );
+}
+
+function Table({ head, rows, accentFirstCol }: { head: string[]; rows: string[][]; accentFirstCol?: boolean }) {
   return (
     <div className="overflow-x-auto">
       <table className="table w-full">
@@ -374,15 +617,29 @@ function Table({
   );
 }
 
-function ServiceCard({ title, meta, accent }: { title: string; meta: string; accent?: boolean }) {
+function DatabaseTableBlock({ table }: { table: TableArtifact }) {
   return (
-    <div
-      className="rounded-lg border px-3.5 py-3"
-      style={{
-        borderColor: accent ? "var(--color-accent-800)" : "var(--color-neutral-800)",
-        background: accent ? "color-mix(in srgb, var(--color-accent-900) 50%, transparent)" : "transparent",
-      }}
-    >
+    <div className="mb-5">
+      <p className="mb-2 text-[13px] leading-[21px] text-neutral-300">
+        <span className="font-mono text-accent-300">{table.name}</span> — {table.description}{" "}
+        <span className="text-neutral-600">({table.estimated_row_count} rows est.)</span>
+      </p>
+      <Table
+        head={["Column", "Type", "Constraints", "Description"]}
+        rows={table.columns.map((c) => [c.name, c.data_type, c.constraints.join(", ") || "—", c.description])}
+      />
+      {table.indexes.length > 0 && (
+        <p className="mt-2 font-mono text-[11px] text-neutral-500">
+          Indexes: {table.indexes.map((idx) => `${idx.name} (${idx.columns.join(", ")})`).join(" · ")}
+        </p>
+      )}
+    </div>
+  );
+}
+
+function ServiceCard({ title, meta }: { title: string; meta: string }) {
+  return (
+    <div className="rounded-lg border px-3.5 py-3" style={{ borderColor: "var(--color-neutral-800)" }}>
       <p className="m-0 mb-1 text-[13px] leading-[19px]">{title}</p>
       <p className="m-0 font-mono text-[10.5px] text-neutral-500">{meta}</p>
     </div>

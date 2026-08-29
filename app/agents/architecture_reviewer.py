@@ -55,7 +55,8 @@ async def architecture_reviewer_agent(state: DesignState):
     if feedback.approved or iterations >= MAX_REVIEW_ITERATIONS:
         return Command(
             goto="supervisor",
-            update={"review_feedback": feedback, "review_iterations": iterations},
+            update={"review_feedback": feedback,
+                    "review_iterations": iterations},
             graph=Command.PARENT,
         )
 

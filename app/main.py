@@ -77,7 +77,8 @@ async def run_and_stream(thread_id: str, graph_input, config: dict) -> dict:
         }
         await event_bus.publish(thread_id, {"type": "terminal", **payload})
         event_bus.close(thread_id)
-        raise HTTPException(status_code=502, detail=payload["message"]) from exc
+        raise HTTPException(
+            status_code=502, detail=payload["message"]) from exc
 
     await event_bus.publish(thread_id, {"type": "terminal", **payload})
     event_bus.close(thread_id)
@@ -121,6 +122,16 @@ async def resume_design(req: ResumeDesignRequest):
         Command(resume=req.answers),
         {"configurable": {"thread_id": req.thread_id}},
     )
+
+
+@app.get("/design/state/{thread_id}")
+async def get_design_state(thread_id: str):
+    cached = event_bus.get_last_terminal(thread_id)
+    if cached is None:
+        raise HTTPException(
+            status_code=404, detail="No finished run for this thread_id")
+    payload = {k: v for k, v in cached.items() if k != "type"}
+    return jsonable_encoder(payload)
 
 
 @app.get("/design/stream/{thread_id}")

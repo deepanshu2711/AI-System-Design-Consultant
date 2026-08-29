@@ -86,9 +86,14 @@ DECISION RULES:
 11. Brevity:
     - Keep the top-level `reasoning` field concise — a few sentences on topology
       and engine choice is enough. Do not restate the full list of cached items.
+    - Every field (invalidation_strategy, per-item reasoning, consistency_model,
+      hot_key_risk_notes, sample_access_pattern, etc.) is hard-capped at a few
+      hundred characters and must be a direct one-or-two-sentence answer
+      (roughly under 40 words) — not a paragraph.
     - If you notice yourself repeating a cached item, TTL justification, or
-      sentence you've already written, stop immediately and move on instead of
-      looping.
+      sentence you've already written, or a field's text drifting into
+      unrelated words or ideas instead of describing the design, stop
+      immediately and write a short direct answer instead of continuing.
 
 Always tie your reasoning back to specific access patterns implied by the functional
 requirements — avoid generic caching advice not grounded in this system's actual needs.
