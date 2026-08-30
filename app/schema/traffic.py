@@ -1,15 +1,15 @@
-from pydantic import BaseModel, model_validator
+from pydantic import BaseModel, Field, model_validator
 
 
 class TrafficEstimate(BaseModel):
-    dau: int
-    mau: int
-    peak_rps: float
-    avg_rps: float
-    read_write_ratio: str
-    avg_request_size_kb: float
-    avg_response_size_kb: float
-    reasoning: str
+    dau: int = Field(gt=0)
+    mau: int = Field(gt=0)
+    peak_rps: float = Field(gt=0)
+    avg_rps: float = Field(gt=0)
+    read_write_ratio: str = Field(min_length=1)
+    avg_request_size_kb: float = Field(gt=0)
+    avg_response_size_kb: float = Field(gt=0)
+    reasoning: str = Field(min_length=1, max_length=400)
 
     @model_validator(mode="after")
     def validate_consistency(self):
