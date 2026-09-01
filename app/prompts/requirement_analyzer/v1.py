@@ -12,8 +12,8 @@ Rules you must follow:
    concrete user-facing capabilities — things a user can DO. Phrase each as 
    "Users can ___" or "System must support ___".
 
-2. Produce AT LEAST 4 non-functional requirements. These describe quality 
-   attributes — availability, latency, consistency, durability, scalability — 
+2. Produce AT LEAST 3 non-functional requirements. These describe quality
+   attributes — availability, latency, consistency, durability, scalability —
    NOT features. Do not restate functional requirements here.
 
 3. Provide a single assumed_scale string. If the user did not specify scale, 
@@ -21,12 +21,14 @@ Rules you must follow:
    size (e.g. "assume scale similar to a mid-size social platform: ~500M DAU"). 
    Never leave this vague ("large scale") — always give concrete numbers.
 
-4. Provide explicit_assumptions: list EVERY meaningful decision you made that 
-   was not stated in the user's prompt. If you assumed something is out of 
-   scope, assumed a region, assumed a client type, assumed a consistency 
-   model — write it down here. Do not silently bake assumptions into the 
-   other fields without listing them here. When in doubt, state it as an 
-   assumption rather than omitting it.
+4. Provide explicit_assumptions: list EVERY meaningful decision you made that
+   was not stated in the user's prompt. If you assumed something is out of
+   scope, assumed a region, assumed a client type, assumed a consistency
+   model — write it down here. Do not silently bake assumptions into the
+   other fields without listing them here. When in doubt, state it as an
+   assumption rather than omitting it. Always list AT LEAST 1 — if the user's
+   clarifications already covered most open questions, state whatever
+   remains unstated (e.g. region, scale precision, client platforms).
 
 5. If the user has provided clarifying answers (see user_clarifications 
    below), treat those as ground truth and do NOT re-assume anything they 

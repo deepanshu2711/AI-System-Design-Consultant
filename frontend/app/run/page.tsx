@@ -52,7 +52,7 @@ export default function RunScreen() {
   const [threadId, setThreadId] = useState("");
   const [userQuery, setUserQuery] = useState("");
   const [doneNodes, setDoneNodes] = useState<Set<string>>(new Set());
-  const [activeNode, setActiveNode] = useState<string | null>(null);
+  const [activeNodes, setActiveNodes] = useState<Set<string>>(new Set());
   const nodeStartedAtRef = useRef<Map<string, number>>(new Map());
   const [status, setStatus] = useState<RunStatus>("connecting");
   const [errorMessage, setErrorMessage] = useState("");
@@ -82,13 +82,17 @@ export default function RunScreen() {
     const source = openRunStream(session.threadId, {
       onNodeStart: (node) => {
         setStatus("running");
-        setActiveNode(node);
+        setActiveNodes((prev) => new Set(prev).add(node));
         nodeStartedAtRef.current.set(node, Date.now());
         pushLog(`supervisor → ${node}`);
       },
       onNodeEnd: (node) => {
         setDoneNodes((prev) => new Set(prev).add(node));
-        setActiveNode((cur) => (cur === node ? null : cur));
+        setActiveNodes((prev) => {
+          const next = new Set(prev);
+          next.delete(node);
+          return next;
+        });
         pushLog(`${node} ✓`, "var(--color-accent-300)");
       },
       onTerminal: (res) => {
@@ -104,7 +108,7 @@ export default function RunScreen() {
           router.push("/clarify");
           return;
         }
-        setActiveNode(null);
+        setActiveNodes(new Set());
         if (res.status === "error") {
           setStatus("error");
           setErrorMessage(res.message ?? "The run failed.");
@@ -154,17 +158,15 @@ useEffect(() => {
 
   const doneCount = doneNodes.size;
   const done = status === "complete";
-  // Recomputed on every `elapsed` tick (re-render) so it counts up live;
-  // plain seconds since the node started, not clock()'d — a run only ever
-  // shows one active node at a time, and node durations run well under a
-  // minute, so a "00:" minutes prefix (elapsed % 60) was always zero and
-  // never actually meant anything.
-  const activeSeconds = activeNode
-    ? Math.floor((Date.now() - (nodeStartedAtRef.current.get(activeNode) ?? Date.now())) / 1000)
-    : 0;
-  const activeTitle = useMemo(
-    () => (activeNode ? NODES.find((n) => n.nodes.includes(activeNode))?.title ?? activeNode : undefined),
-    [activeNode]
+  // Per-box elapsed seconds are computed inline where each box renders (below),
+  // keyed off that box's own node start time(s) — several boxes can be active
+  // at once now that the supervisor fans out via Send(), each on its own clock.
+  // Recomputed on every `elapsed` tick (re-render) so they count up live;
+  // plain seconds since the node started, not clock()'d — node durations run
+  // well under a minute, so a "00:" minutes prefix was always zero anyway.
+  const activeTitles = useMemo(
+    () => NODES.filter((n) => n.nodes.some((name) => activeNodes.has(name))).map((n) => n.title),
+    [activeNodes]
   );
   const visibleLog = log.slice(-11);
 
@@ -209,7 +211,7 @@ useEffect(() => {
                 <g fill="none" strokeWidth={1.4}>
                   {NODES.map((n) => {
                     const allDone = n.nodes.every((name) => doneNodes.has(name));
-                    const isActive = n.nodes.includes(activeNode ?? "");
+                    const isActive = n.nodes.some((name) => activeNodes.has(name));
                     const isReached = allDone || isActive;
                     return (
                       <path
@@ -240,14 +242,26 @@ useEffect(() => {
                 <CompassTool weight="fill" size={20} className="mx-auto text-accent" />
                 <p className="m-0 mb-0.5 mt-1.5 text-[14px] font-medium leading-5">Supervisor</p>
                 <p className="m-0 font-mono text-[10px] leading-[15px] text-neutral-500">
-                  {done ? "→ END" : activeTitle ? `→ ${activeTitle.split(" ")[0].toLowerCase()}` : "…"}
+                  {done
+                    ? "→ END"
+                    : activeTitles.length > 1
+                      ? `→ ${activeTitles.length} running`
+                      : activeTitles[0]
+                        ? `→ ${activeTitles[0].split(" ")[0].toLowerCase()}`
+                        : "…"}
                 </p>
               </div>
 
               {NODES.map((n) => {
                 const isDone = n.nodes.every((name) => doneNodes.has(name));
-                const isActive = !isDone && n.nodes.includes(activeNode ?? "");
+                const activeNames = n.nodes.filter((name) => activeNodes.has(name));
+                const isActive = !isDone && activeNames.length > 0;
                 const isQueued = !isDone && !isActive;
+                const boxActiveSeconds = activeNames.length
+                  ? Math.floor(
+                      (Date.now() - Math.min(...activeNames.map((name) => nodeStartedAtRef.current.get(name) ?? Date.now()))) / 1000
+                    )
+                  : 0;
                 return (
                   <div
                     key={n.title}
@@ -286,7 +300,7 @@ useEffect(() => {
                         {n.title}
                       </span>
                       <span className="block font-mono text-[9.5px] leading-[14px]" style={{ color: isActive ? "var(--color-accent-300)" : "var(--color-neutral-600)" }}>
-                        {isDone ? "done" : isActive ? `working · ${activeSeconds}s` : "queued"}
+                        {isDone ? "done" : isActive ? `working · ${boxActiveSeconds}s` : "queued"}
                       </span>
                     </span>
                   </div>
@@ -319,9 +333,9 @@ useEffect(() => {
               {l.t} <span style={{ color: l.color }}>{l.msg}</span>
             </p>
           ))}
-          {status === "running" && (
+          {status === "running" && activeNodes.size > 0 && (
             <p className="m-0 text-accent-300">
-              {activeTitle ? `  ${titleFor(activeNode ?? "")} working…` : ""}
+              {`  ${[...activeNodes].map(titleFor).join(", ")} working…`}
               <span className="ml-1 inline-block h-3 w-1.5 align-[-1px] bg-accent" style={{ animation: "caret 1.1s step-end infinite" }} />
             </p>
           )}

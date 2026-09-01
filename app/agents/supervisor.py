@@ -1,17 +1,48 @@
 from langgraph.graph import END
 
 from app.state.desgin_state import DesignState
-from langgraph.types import Command
+from langgraph.types import Command, Send
 from app.utils.constants import MAX_AGENT_FAILURES, MAX_REVIEW_ITERATIONS
 from app.utils.timing import timed_node
 
 
+PARALLEL_DESIGN_STAGE = {
+    "database_design": "database_designer_agent",
+    "capacity_plan": "capacity_planner_agent",
+}
+
+AGAIN_PARALLWL_DESIGN_STATE = {
+    "cache_design": "cache_expert_agent",
+    "queue_expert": "queue_expert_agent",
+    "api_design": "api_designer_agent"
+}
+
+
+def _failure_count(state: DesignState, node_name: str) -> int:
+    return sum(1 for error in (state.get('errors') or []) if error.node == node_name)
+
+
+def _is_exausted(state: DesignState, node_name: str) -> bool:
+    return _failure_count(state, node_name) >= MAX_AGENT_FAILURES
+
+
 def _route_if_healthy(state: DesignState, node_name: str):
-    failures = sum(1 for error in (state.get("errors") or [])
-                   if error.node == node_name)
-    if failures >= MAX_AGENT_FAILURES:
+    if _is_exausted(state, node_name):
         return Command(goto=END, update={"run_status": "failed"})
     return Command(goto=node_name)
+
+
+def _fanout_if_healthy(state: DesignState, stage: dict[str, str]):
+    pending = [node for field, node in stage.items() if not state.get(field)]
+
+    if not pending:
+        return None
+
+    exausted = [node for node in pending if _is_exausted(state, node)]
+    if (exausted):
+        return Command(goto=END, update={"run_status": "failed"})
+
+    return Command(goto=[Send(node, state) for node in pending])
 
 
 @timed_node("supervisor")
@@ -22,16 +53,22 @@ async def supervisor(state: DesignState):
         return _route_if_healthy(state, "requirement_analyzer_agent")
     if not state['traffic_estimates']:
         return _route_if_healthy(state, "traffic_estimator_agent")
-    if not state['capacity_plan']:
-        return _route_if_healthy(state, "capacity_planner_agent")
-    if not state['database_design']:
-        return _route_if_healthy(state, "database_designer_agent")
-    if not state['cache_design']:
-        return _route_if_healthy(state, "cache_expert_agent")
-    if not state['queue_expert']:
-        return _route_if_healthy(state, "queue_expert_agent")
-    if not state['api_design']:
-        return _route_if_healthy(state, "api_designer_agent")
+
+    parallel_command = _fanout_if_healthy(state, PARALLEL_DESIGN_STAGE)
+    if parallel_command is not None:
+        return parallel_command
+
+    # if not state['cache_design']:
+    #     return _route_if_healthy(state, "cache_expert_agent")
+    # if not state['queue_expert']:
+    #     return _route_if_healthy(state, "queue_expert_agent")
+    # if not state['api_design']:
+        # return _route_if_healthy(state, "api_designer_agent")
+
+    secound_parallel_command = _fanout_if_healthy(
+        state, AGAIN_PARALLWL_DESIGN_STATE)
+    if secound_parallel_command is not None:
+        return secound_parallel_command
 
     requirements = state.get('clarified_requirements')
     needs_media = getattr(requirements, 'involves_media_content', False)
