@@ -1,114 +1,133 @@
 # AI System Design Consultant
 
-**Turn "design Instagram" into an industry-grade system design document — entirely offline, no API keys.**
-
-A supervisor-and-worker [LangGraph](https://www.langchain.com/langgraph) application that runs an automated system-design "interview." Give it a prompt like *"design Instagram"* and a supervisor node routes a shared design state through a chain of specialist LLM agents — clarifying questions, requirement analysis, traffic estimation, capacity planning, database/cache/queue/CDN/storage design, API design, microservices — each producing a typed design artifact, until the whole document is assembled.
-
-All agents share a single local model served by [Ollama](https://ollama.com) via `langchain-ollama` — nothing leaves your machine, and there's no external LLM API required.
-
-<!--
-TODO: replace this with a real demo. A short GIF or terminal recording showing
-a POST /design/start call and the resulting design doc converts far better
-than any amount of text. Tools like asciinema, vhs, or a simple screen
-recording all work.
-
-![demo](./docs/demo.gif)
--->
+Turn **"design Instagram"** into a full system design document — locally, with no API keys.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 [![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
 [![LangGraph](https://img.shields.io/badge/built%20with-LangGraph-1C3C3C.svg)](https://www.langchain.com/langgraph)
 [![Ollama](https://img.shields.io/badge/runs%20on-Ollama-000000.svg)](https://ollama.com)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](./CONTRIBUTING.md)
+
+A [LangGraph](https://www.langchain.com/langgraph) supervisor-and-worker app that runs an automated system-design interview. You give it a prompt; a supervisor node routes a shared design state through a chain of specialist agents — clarifying questions, requirements, traffic estimation, capacity planning, database/cache/queue/CDN/storage, API design, microservices — each producing a typed artifact, until the document is assembled.
+
+Every agent shares one local model served by [Ollama](https://ollama.com). Nothing leaves your machine.
+
+---
+
+## What you get
+
+<!--
+Replace this section with output from a real run — trimmed, but real.
+A short asciinema/vhs recording of a POST /design/start plus the resulting
+doc will do more for this README than everything below it.
+-->
+
+```
+$ curl -s localhost:8000/design/start \
+    -H 'content-type: application/json' \
+    -d '{"user_query": "Design a system like Instagram"}'
+```
+
+The run pauses on clarifying questions, then fills in a `DesignState` artifact by artifact:
+
+```
+requirements       ✓  functional / non-functional, in/out of scope
+traffic_estimate   ✓  DAU, read:write ratio, peak QPS
+capacity_plan      ✓  storage/bandwidth per year, server count
+database_design    ✓  engine choice + rationale, schema, sharding key
+cache_design       ✓  what's cached, eviction, invalidation
+queue_design       ✓  async boundaries, topics, delivery guarantees
+cdn_design         ✓  what's edge-cached, TTLs
+api_design         ✓  endpoints, request/response shapes
+microservices      ✓  service boundaries and their dependencies
+```
+
+Because each agent is forced into a Pydantic schema, the result is structured data you can render, diff, or export — not a wall of prose.
 
 ## Why this exists
 
-System design interviews and real architecture reviews follow a repeatable shape: clarify requirements, estimate scale, pick a data model, work through caching/queues/CDN, sketch the API, then the services. Most LLM wrappers try to do this in one shot with one giant prompt and produce something shallow. This project instead models it as what it actually is — a pipeline of specialists handing off a shared state, each one focused and typed — and runs it entirely on a local model so it's free to experiment with and doesn't ship your design questions to a third party.
+System design interviews and real architecture reviews follow a repeatable shape: clarify, estimate scale, pick a data model, work through caching/queues/CDN, sketch the API, then the services. Most LLM wrappers try to do that in one giant prompt and produce something shallow.
 
-## Features
-
-- **Multi-agent pipeline** — a supervisor routes a shared `DesignState` through specialist agents (requirements, traffic estimation, capacity planning, database/cache/queue/CDN/storage, API design, microservices), each producing a typed, structured artifact.
-- **Fully local** — runs on Ollama, so there's no API key, no rate limit, and no data leaving your machine.
-- **Human-in-the-loop** — the flow can pause for clarifying questions and resume once you answer them.
-- **Typed outputs** — every agent is forced into a Pydantic-structured response, so the assembled document is consistent rather than freeform text.
-- **Tool-using agents** — agents can call bound tools (e.g. a sandboxed calculator) in a capped tool-calling loop before producing their final artifact.
+This models it as what it actually is — a pipeline of specialists handing off a shared state, each one narrow and typed — and runs on a local model, so experimenting is free and your design questions stay on your hardware.
 
 ## How it works
 
 ![Supervisor graph](./supervisor-graph.png)
 
-
 - A `StateGraph` (`app/grpahs/supervisor_graph.py`) holds a shared `DesignState` (`app/state/desgin_state.py`).
-- `supervisor` (`app/agents/supervisor.py`) is the sole router: it inspects which fields of the state are still empty and dispatches to the next specialist agent.
-- Each specialist agent (`app/agents/*.py`) follows the same shape: build a prompt from state → bind tools (e.g. a sandboxed calculator) → run a capped tool-calling loop → force a Pydantic-typed structured output → hand control back to the supervisor.
-- Agents never call each other directly — every transition goes back through the supervisor.
+- `supervisor` (`app/agents/supervisor.py`) is the sole router. It inspects which fields of the state are still empty and dispatches the next specialist.
+- Every specialist (`app/agents/*.py`) has the same shape: build a prompt from state → bind tools (e.g. a sandboxed calculator) → run a capped tool-calling loop → force a Pydantic-typed structured output → return control to the supervisor.
+- Agents never call each other. Every transition goes back through the supervisor, so the routing logic lives in exactly one place.
 - System prompts are versioned per agent under `app/prompts/<agent_name>/v1.py`.
 
-See [`CLAUDE.md`](./CLAUDE.md) for the full architectural notes (including two intentional file/module misspellings that other code depends on — don't "fix" those paths without updating every import).
+[`CLAUDE.md`](./CLAUDE.md) has the full architectural notes — including two intentional misspellings in module paths that the rest of the code imports. Don't "fix" those without updating every import.
 
-## Status
+## Quickstart
 
-This is an active work-in-progress, not a finished product. Known gaps are tracked in [`TODO.md`](./TODO.md) and in the repo's [issues](../../issues) — notably, there's no automated test suite yet, so please verify changes manually against a running instance.
-
-Looking for a way to help out? Issues tagged [`good first issue`](../../issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) are a good place to start — see [Contributing](#contributing) below.
-
-## Prerequisites
-
-- Python 3.12+
-- [uv](https://docs.astral.sh/uv/) for dependency management
-- [Ollama](https://ollama.com) installed and running locally, with the model pulled:
+**Prerequisites:** Python 3.12+, [uv](https://docs.astral.sh/uv/), and [Ollama](https://ollama.com) running locally.
 
 ```bash
 ollama pull qwen2.5:3b
-```
 
-The model defaults to `qwen2.5:3b` but can be overridden by setting the `OLLAMA_MODEL` environment variable (see `.env.example`):
-
-## Setup
-
-```bash
 git clone https://github.com/deepanshu2711/AI-System-Design-Consultant.git
 cd AI-System-Design-Consultant
 uv sync
-cp .env.example .env # optional: fill in LangSmith tracing keys if you want traces
-```
+cp .env.example .env        # optional: LangSmith tracing keys
 
-## Running it
-
-Make sure the Ollama daemon is running, then:
-
-```bash
 uv run fastapi dev app/main.py
 ```
 
 ### API
 
-- `POST /design/start` — kicks off a new design run.
+**`POST /design/start`** — kick off a run.
 
-```json
-{ "user_query": "Design a system like Instagram" }
+```bash
+curl -s localhost:8000/design/start \
+  -H 'content-type: application/json' \
+  -d '{"user_query": "Design a system like Instagram"}'
 ```
 
-- `POST /design/resume` — resumes an interrupted run (human-in-the-loop clarification) with your answers.
+If the graph interrupts for clarification, the response carries a `thread_id` and the questions.
 
-```json
-{ "thread_id": "<thread_id from /design/start>", "answers": { "...": "..." } }
+**`POST /design/resume`** — answer them and continue.
+
+```bash
+curl -s localhost:8000/design/resume \
+  -H 'content-type: application/json' \
+  -d '{"thread_id": "<from /design/start>", "answers": {"expected_dau": "50M"}}'
 ```
 
-Checkpointing is in-memory only (`MemorySaver`) — state does not survive a process restart.
+Checkpointing is in-memory (`MemorySaver`), so state does not survive a process restart.
+
+### Configuration
+
+| Variable | Default | Notes |
+| --- | --- | --- |
+| `OLLAMA_MODEL` | `qwen2.5:3b` | Must be a model with tool-calling support. |
+
+See `.env.example` for the optional LangSmith tracing variables.
+
+## A note on model size
+
+`qwen2.5:3b` is the default because it runs on a laptop, not because it writes the best documents. At 3B the pipeline works end to end, but the reasoning inside each artifact is thin — capacity numbers get hand-wavy and service boundaries get generic. If you have the memory, `qwen2.5:7b` or larger is a noticeably different experience for the same code. Tool calling is a hard requirement, so text-only models won't work.
+
+## Status
+
+Active work in progress, not a finished product. The main gap: **there is no automated test suite yet**, so changes need to be verified by hand against a running instance. Other known gaps live in [`TODO.md`](./TODO.md) and the [issues](../../issues).
+
+Want to help? [`good first issue`](../../issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) is the place to start.
 
 ## Roadmap
 
 - [ ] Automated test suite
-- [ ] Env var override for the Ollama model
 - [ ] Persistent checkpointing (swap `MemorySaver` for a durable store)
-- [ ] Export assembled design doc to Markdown/PDF
+- [ ] Export the assembled design doc to Markdown/PDF
+- [ ] Architecture review pass over the completed document
 
-See [`TODO.md`](./TODO.md) for the full list.
+Full list in [`TODO.md`](./TODO.md).
 
 ## Contributing
 
-Contributions are welcome — see [`CONTRIBUTING.md`](./CONTRIBUTING.md) for local setup, conventions, and what to know before opening a PR. If you build something with this or find it useful, a star helps others find it too.
+See [`CONTRIBUTING.md`](./CONTRIBUTING.md) for local setup and conventions. If you build something with this or find it useful, a star helps others find it.
 
 ## License
 
