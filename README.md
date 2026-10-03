@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="./assets/banner.png" alt="AI System Design Consultant — turn &quot;Design Instagram&quot; into a full system design document, locally" width="100%">
+</p>
+
 # AI System Design Consultant
 
 Turn **"design Instagram"** into a full system design document — locally, with no API keys.
